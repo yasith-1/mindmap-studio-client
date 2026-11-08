@@ -8,6 +8,7 @@ import { copyMindmapSvg, downloadMindmapSvg } from './lib/exportSvg.js';
 import { examples, exampleOrder } from './data/examples.js';
 
 const DRAFT_KEY = 'mms-draft';
+const ACCENT_KEY = 'mms-accent';
 
 function loadInitial() {
   try {
@@ -19,12 +20,41 @@ function loadInitial() {
   return examples.readme;
 }
 
+/** Normalise any CSS colour to a #rrggbb hex the picker and maths can use. */
+function toHex(value) {
+  const v = (value || '').trim();
+  if (/^#[0-9a-f]{6}$/i.test(v)) return v.toLowerCase();
+  if (/^#[0-9a-f]{3}$/i.test(v)) {
+    return `#${v[1]}${v[1]}${v[2]}${v[2]}${v[3]}${v[3]}`.toLowerCase();
+  }
+  const m = /rgba?\(([^)]+)\)/i.exec(v);
+  if (m) {
+    const [r, g, b] = m[1].split(',').map((n) => parseInt(n, 10));
+    return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+  }
+  return '';
+}
+
+/** Drive the whole app's colour by setting the accent CSS variables. */
+function applyAccent(hex) {
+  const h = toHex(hex);
+  if (!h) return;
+  const n = parseInt(h.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const root = document.documentElement;
+  root.style.setProperty('--accent', h);
+  root.style.setProperty('--accent-weak', `rgba(${r}, ${g}, ${b}, 0.16)`);
+}
+
 export default function App() {
   const [markdown, setMarkdown] = useState(loadInitial);
   const [activePane, setActivePane] = useState('edit'); // mobile toggle
   const [howOpen, setHowOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [diagramType, setDiagramType] = useState('mindmap');
+  const [accent, setAccent] = useState('');
   const exIdx = useRef(0);
   const fileRef = useRef(null);
   const toastTimer = useRef(null);
@@ -44,6 +74,39 @@ export default function App() {
     }, 180);
     return () => clearTimeout(t);
   }, [markdown, update]);
+
+  // Adopt a saved accent, or seed the picker from the theme's current accent.
+  useEffect(() => {
+    let saved = '';
+    try {
+      saved = localStorage.getItem(ACCENT_KEY) || '';
+    } catch {
+      /* ignore */
+    }
+    if (saved) {
+      applyAccent(saved);
+      setAccent(toHex(saved));
+    } else {
+      const base = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+      setAccent(toHex(base) || '#2dd4bf');
+    }
+  }, []);
+
+  const handleAccentChange = (value, commit) => {
+    const hex = toHex(value);
+    if (!hex) return;
+    setAccent(hex);
+    applyAccent(hex);
+    if (commit) {
+      try {
+        localStorage.setItem(ACCENT_KEY, hex);
+      } catch {
+        /* ignore */
+      }
+      // Re-render the active diagram so its d3 root node picks up the colour.
+      setType(diagramType);
+    }
+  };
 
   const flash = useCallback((msg) => {
     setToast(msg);
@@ -108,6 +171,8 @@ export default function App() {
         onImport={handleImportClick}
         onCopy={handleCopy}
         onDownload={handleDownload}
+        accent={accent}
+        onAccentChange={handleAccentChange}
       />
 
       <div className="pane-toggle" role="group" aria-label="Switch pane">

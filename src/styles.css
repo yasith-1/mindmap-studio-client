@@ -79,7 +79,6 @@ body {
   display: flex;
   align-items: center;
   gap: 9px;
-  margin-right: auto;
   min-width: 0;
 }
 .glyph {
@@ -107,6 +106,81 @@ body {
   .tag {
     display: none;
   }
+}
+
+/* ---- accent colour picker ---- */
+.accent-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline: auto; /* centre between the brand and the tools */
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.accent-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--sw);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.swatch:hover {
+  transform: scale(1.12);
+}
+.swatch.active {
+  border-color: var(--fg);
+  box-shadow: 0 0 0 2px var(--surface) inset;
+}
+.swatch.custom {
+  overflow: hidden;
+  background: conic-gradient(red, orange, yellow, lime, aqua, blue, magenta, red);
+  display: inline-flex;
+}
+.swatch.custom input {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+}
+@media (max-width: 640px) {
+  .accent-label {
+    display: none;
+  }
+}
+
+/* Smoothly animate every accent-driven colour when the theme colour changes. */
+.glyph circle,
+.glyph path {
+  transition: fill 0.45s ease, stroke 0.45s ease;
+}
+.primary,
+.dot,
+.diagram-types button.active,
+.pane-toggle button[aria-pressed='true'] {
+  transition:
+    background-color 0.45s ease,
+    border-color 0.45s ease,
+    color 0.45s ease,
+    box-shadow 0.45s ease;
 }
 
 .tools {

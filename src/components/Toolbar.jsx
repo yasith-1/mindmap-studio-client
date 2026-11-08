@@ -1,6 +1,10 @@
 import { BookIcon, ImportIcon, CopyIcon, DownloadIcon } from './Icons.jsx';
 
-export default function Toolbar({ onExample, onImport, onCopy, onDownload }) {
+// Preset accent colours; the custom picker covers everything else.
+const PRESETS = ['#2dd4bf', '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#22c55e'];
+
+export default function Toolbar({ onExample, onImport, onCopy, onDownload, accent, onAccentChange }) {
+  const current = (accent || '').toLowerCase();
   return (
     <header className="toolbar">
       <div className="brand">
@@ -20,6 +24,30 @@ export default function Toolbar({ onExample, onImport, onCopy, onDownload }) {
           <h1>MindMap Studio</h1>
           <span className="tag">Markdown in, mind map out — live</span>
         </div>
+      </div>
+
+      <div className="accent-picker" role="group" aria-label="Accent colour">
+        <span className="accent-label">Theme</span>
+        {PRESETS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            className={`swatch${current === c ? ' active' : ''}`}
+            style={{ '--sw': c }}
+            title={`Use ${c}`}
+            aria-label={`Use accent ${c}`}
+            aria-pressed={current === c}
+            onClick={() => onAccentChange(c, true)}
+          />
+        ))}
+        <label className="swatch custom" title="Custom colour">
+          <input
+            type="color"
+            value={current || '#2dd4bf'}
+            onInput={(e) => onAccentChange(e.target.value, false)}
+            onChange={(e) => onAccentChange(e.target.value, true)}
+          />
+        </label>
       </div>
 
       <div className="tools">
