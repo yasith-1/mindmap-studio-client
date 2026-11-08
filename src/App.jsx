@@ -9,6 +9,7 @@ import { examples, exampleOrder } from './data/examples.js';
 
 const DRAFT_KEY = 'mms-draft';
 const ACCENT_KEY = 'mms-accent';
+const THEME_KEY = 'mms-theme';
 
 function loadInitial() {
   try {
@@ -55,6 +56,7 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [diagramType, setDiagramType] = useState('mindmap');
   const [accent, setAccent] = useState('');
+  const [mode, setMode] = useState('dark');
   const exIdx = useRef(0);
   const fileRef = useRef(null);
   const toastTimer = useRef(null);
@@ -74,6 +76,35 @@ export default function App() {
     }, 180);
     return () => clearTimeout(t);
   }, [markdown, update]);
+
+  // Apply the saved (or system-preferred) light/dark mode on first load.
+  useEffect(() => {
+    let saved = '';
+    try {
+      saved = localStorage.getItem(THEME_KEY) || '';
+    } catch {
+      /* ignore */
+    }
+    const prefersDark =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initial = saved || (prefersDark ? 'dark' : 'light');
+    setMode(initial);
+    document.documentElement.setAttribute('data-theme', initial);
+  }, []);
+
+  const toggleMode = () => {
+    const next = mode === 'dark' ? 'light' : 'dark';
+    setMode(next);
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {
+      /* ignore */
+    }
+    // Re-render the active diagram so its d3 colours follow the new theme.
+    setType(diagramType);
+  };
 
   // Adopt a saved accent, or seed the picker from the theme's current accent.
   useEffect(() => {
@@ -183,6 +214,8 @@ export default function App() {
         onDownload={handleDownload}
         accent={accent}
         onAccentChange={handleAccentChange}
+        mode={mode}
+        onToggleMode={toggleMode}
       />
 
       <div className="pane-toggle" role="group" aria-label="Switch pane">

@@ -1,4 +1,12 @@
-import { BookIcon, ImportIcon, CopyIcon, ImageIcon, DownloadIcon } from './Icons.jsx';
+import {
+  BookIcon,
+  ImportIcon,
+  CopyIcon,
+  ImageIcon,
+  DownloadIcon,
+  SunIcon,
+  MoonIcon,
+} from './Icons.jsx';
 
 // Preset accent colours; the custom picker covers everything else.
 const PRESETS = ['#2dd4bf', '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#22c55e'];
@@ -11,6 +19,8 @@ export default function Toolbar({
   onDownload,
   accent,
   onAccentChange,
+  mode,
+  onToggleMode,
 }) {
   const current = (accent || '').toLowerCase();
   return (
@@ -34,8 +44,21 @@ export default function Toolbar({
         </div>
       </div>
 
-      <div className="accent-picker" role="group" aria-label="Accent colour">
-        <span className="accent-label">Theme</span>
+      <div className="accent-picker" role="group" aria-label="Theme">
+        <button
+          type="button"
+          className="mode-toggle"
+          onClick={onToggleMode}
+          title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {mode === 'dark' ? (
+            <SunIcon width="15" height="15" />
+          ) : (
+            <MoonIcon width="15" height="15" />
+          )}
+        </button>
+        <span className="accent-label">Colour</span>
         {PRESETS.map((c) => (
           <button
             key={c}
