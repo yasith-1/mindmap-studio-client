@@ -11,6 +11,14 @@ import {
 // Preset accent colours; the custom picker covers everything else.
 const PRESETS = ['#2dd4bf', '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#22c55e'];
 
+const CUSTOM_GRADIENT = 'conic-gradient(red, orange, yellow, lime, aqua, blue, magenta, red)';
+
+// Shared responsive bit for the five action buttons. Once the toolbar wraps the
+// tools onto their own row (≤1100px), they grow to equal widths and fill it;
+// on small phones (≤480px) they also drop their labels to icon-only squares.
+const TOOL =
+  'max-[1100px]:flex-1 max-[1100px]:justify-center max-[600px]:px-2';
+
 export default function Toolbar({
   onExample,
   onImport,
@@ -24,9 +32,14 @@ export default function Toolbar({
 }) {
   const current = (accent || '').toLowerCase();
   return (
-    <header className="toolbar">
-      <div className="brand">
-        <svg className="glyph" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+    <header className="flex flex-wrap items-center gap-3 border-b border-line py-3">
+      <div className="flex min-w-0 items-center gap-[9px]">
+        <svg
+          className="glyph size-[26px] flex-none"
+          viewBox="0 0 32 32"
+          fill="none"
+          aria-hidden="true"
+        >
           <circle cx="7" cy="16" r="4" fill="var(--accent)" />
           <circle cx="24" cy="7" r="3" fill="none" stroke="var(--accent)" strokeWidth="2" />
           <circle cx="24" cy="16" r="3" fill="none" stroke="var(--accent)" strokeWidth="2" />
@@ -38,42 +51,58 @@ export default function Toolbar({
             strokeLinecap="round"
           />
         </svg>
-        <div className="brand-text">
-          <h1>MindMap Studio</h1>
-          <span className="tag">Markdown in, mind map out — live</span>
+        <div className="min-w-0">
+          <h1 className="m-0 whitespace-nowrap text-[1.02rem] font-bold tracking-[-0.01em]">
+            MindMap Studio
+          </h1>
+          <span className="whitespace-nowrap text-[0.72rem] font-medium text-muted max-[520px]:hidden">
+            Markdown in, mind map out — live
+          </span>
         </div>
       </div>
 
-      <div className="accent-picker" role="group" aria-label="Theme">
+      <div
+        className="mx-auto flex flex-wrap items-center justify-center gap-1.5 rounded-[10px] border border-line bg-surface px-2 py-1 max-[480px]:w-full max-[480px]:justify-between"
+        role="group"
+        aria-label="Theme"
+      >
         <button
           type="button"
-          className="mode-toggle"
+          className="mr-1 flex h-7 w-[30px] cursor-pointer items-center justify-center rounded-[7px] border border-accent bg-accent-weak p-0 text-accent transition-[transform,box-shadow] hover:shadow-[0_0_0_3px_var(--accent-weak)] active:translate-y-px pointer-coarse:size-9"
           onClick={onToggleMode}
           title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {mode === 'dark' ? (
-            <SunIcon width="15" height="15" />
-          ) : (
-            <MoonIcon width="15" height="15" />
-          )}
+          {mode === 'dark' ? <SunIcon width="15" height="15" /> : <MoonIcon width="15" height="15" />}
         </button>
-        <span className="accent-label">Colour</span>
-        {PRESETS.map((c) => (
-          <button
-            key={c}
-            type="button"
-            className={`swatch${current === c ? ' active' : ''}`}
-            style={{ '--sw': c }}
-            title={`Use ${c}`}
-            aria-label={`Use accent ${c}`}
-            aria-pressed={current === c}
-            onClick={() => onAccentChange(c, true)}
-          />
-        ))}
-        <label className="swatch custom" title="Custom colour">
+        <span className="mr-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.04em] text-muted max-[640px]:hidden">
+          Colour
+        </span>
+        {PRESETS.map((c) => {
+          const active = current === c;
+          return (
+            <button
+              key={c}
+              type="button"
+              className={`relative size-5 cursor-pointer rounded-full border-2 p-0 transition-transform hover:scale-110 pointer-coarse:size-[26px] ${
+                active ? 'border-fg shadow-[inset_0_0_0_2px_var(--surface)]' : 'border-transparent'
+              }`}
+              style={{ backgroundColor: c }}
+              title={`Use ${c}`}
+              aria-label={`Use accent ${c}`}
+              aria-pressed={active}
+              onClick={() => onAccentChange(c, true)}
+            />
+          );
+        })}
+        <label
+          className="relative inline-flex size-5 cursor-pointer overflow-hidden rounded-full border-2 border-transparent transition-transform hover:scale-110 pointer-coarse:size-[26px]"
+          style={{ backgroundImage: CUSTOM_GRADIENT }}
+          title="Custom colour"
+        >
           <input
             type="color"
+            className="absolute inset-[-4px] h-[calc(100%+8px)] w-[calc(100%+8px)] cursor-pointer border-0 bg-transparent p-0 opacity-0"
             value={current || '#2dd4bf'}
             onInput={(e) => onAccentChange(e.target.value, false)}
             onChange={(e) => onAccentChange(e.target.value, true)}
@@ -81,24 +110,47 @@ export default function Toolbar({
         </label>
       </div>
 
-      <div className="tools">
-        <button onClick={onExample} title="Load a sample document">
-          <BookIcon width="15" height="15" /> Example
+      <div className="flex flex-wrap gap-[7px] max-[1100px]:w-full max-[600px]:gap-1.5">
+        <button
+          className={`btn ${TOOL}`}
+          onClick={onExample}
+          title="Load a sample document"
+          aria-label="Load example"
+        >
+          <BookIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Example</span>
         </button>
         <button
+          className={`btn ${TOOL}`}
           onClick={onImport}
           title="Import Markdown, text, HTML, Word (.docx) or PDF — non-Markdown is converted"
+          aria-label="Import a file"
         >
-          <ImportIcon width="15" height="15" /> Import
+          <ImportIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Import</span>
         </button>
-        <button onClick={onCopy} title="Copy the diagram as SVG">
-          <CopyIcon width="15" height="15" /> Copy SVG
+        <button
+          className={`btn ${TOOL}`}
+          onClick={onCopy}
+          title="Copy the diagram as SVG"
+          aria-label="Copy diagram as SVG"
+        >
+          <CopyIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Copy SVG</span>
         </button>
-        <button onClick={onCopyPng} title="Copy the diagram as a PNG image">
-          <ImageIcon width="15" height="15" /> Copy PNG
+        <button
+          className={`btn ${TOOL}`}
+          onClick={onCopyPng}
+          title="Copy the diagram as a PNG image"
+          aria-label="Copy diagram as PNG"
+        >
+          <ImageIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Copy PNG</span>
         </button>
-        <button className="primary" onClick={onDownload} title="Download the mind map as an SVG file">
-          <DownloadIcon width="15" height="15" /> Download
+        <button
+          className={`btn btn-primary ${TOOL}`}
+          onClick={onDownload}
+          title="Download the mind map as an SVG file"
+          aria-label="Download diagram as SVG"
+        >
+          <DownloadIcon width="15" height="15" />{' '}
+          <span className="max-[600px]:sr-only">Download</span>
         </button>
       </div>
     </header>

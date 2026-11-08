@@ -1,3 +1,28 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Theme tokens
+   The app's look is driven by semantic CSS variables (--bg, --surface, …).
+   JS owns two of them at runtime: `applyAccent` writes --accent / --accent-weak
+   from the colour picker, and `applyMode` swaps the whole palette via the
+   data-theme attribute. We keep those variables as the source of truth and map
+   them into Tailwind with `@theme inline`, so utilities like `bg-surface`,
+   `text-fg`, `border-line` and `bg-accent` compile to `var(--…)` and keep
+   following every runtime change.
+--------------------------------------------------------------------------- */
+@theme inline {
+  --color-ground: var(--bg);
+  --color-surface: var(--surface);
+  --color-panel: var(--panel);
+  --color-line: var(--border);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-weak: var(--accent-weak);
+  --font-ui: var(--ui);
+  --font-mono: var(--mono);
+}
+
 :root {
   --bg: #f6f8f7;
   --surface: #ffffff;
@@ -38,342 +63,64 @@
   color-scheme: dark;
 }
 
-* {
-  box-sizing: border-box;
-}
-html,
-body {
-  height: 100%;
-  margin: 0;
-}
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--ui);
-  -webkit-font-smoothing: antialiased;
-}
-#root {
-  height: 100%;
-}
-
-.app {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* ---- toolbar ---- */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding-block: 12px;
-  border-bottom: 1px solid var(--border);
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  min-width: 0;
-}
-.glyph {
-  width: 26px;
-  height: 26px;
-  flex: none;
-}
-.brand-text {
-  min-width: 0;
-}
-.brand h1 {
-  font-size: 1.02rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin: 0;
-  white-space: nowrap;
-}
-.tag {
-  font-size: 0.72rem;
-  color: var(--muted);
-  font-weight: 500;
-  white-space: nowrap;
-}
-@media (max-width: 520px) {
-  .tag {
-    display: none;
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+@layer base {
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--ui);
+    -webkit-font-smoothing: antialiased;
+  }
+  #root {
+    height: 100%;
+  }
+  /* One consistent focus ring for every interactive element. */
+  :where(button, a, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  ::placeholder {
+    color: var(--muted);
   }
 }
 
-/* ---- accent colour picker ---- */
-.accent-picker {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-inline: auto; /* centre between the brand and the tools */
-  padding: 4px 8px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-}
-.accent-label {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-right: 2px;
-}
-.mode-toggle {
-  width: 30px;
-  height: 28px;
-  padding: 0;
-  justify-content: center;
-  border-radius: 7px;
-  color: var(--accent);
-  background: var(--accent-weak);
-  border: 1px solid var(--accent);
-  margin-right: 4px;
-  transition: box-shadow 0.15s ease, background 0.15s ease, transform 0.12s ease;
-}
-.mode-toggle:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-weak);
-}
-.mode-toggle:active {
-  transform: translateY(1px);
-}
-.mode-toggle:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.swatch {
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  background: var(--sw);
-  cursor: pointer;
-  position: relative;
-  transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-.swatch:hover {
-  transform: scale(1.12);
-}
-.swatch.active {
-  border-color: var(--fg);
-  box-shadow: 0 0 0 2px var(--surface) inset;
-}
-.swatch.custom {
-  overflow: hidden;
-  background: conic-gradient(red, orange, yellow, lime, aqua, blue, magenta, red);
-  display: inline-flex;
-}
-.swatch.custom input {
-  position: absolute;
-  inset: -4px;
-  width: calc(100% + 8px);
-  height: calc(100% + 8px);
-  border: 0;
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
-  opacity: 0;
-}
-@media (max-width: 640px) {
-  .accent-label {
-    display: none;
+/* ---------------------------------------------------------------------------
+   Reusable button recipes (Tailwind @apply) — the pill button repeats ~a dozen
+   times, so it earns a class; one-off buttons use utilities in the markup.
+--------------------------------------------------------------------------- */
+@layer components {
+  /* Note: we deliberately do NOT transition colour/background/border on
+     theme-driven surfaces. Those values resolve to CSS variables that JS swaps
+     live (the accent picker, and the light/dark palette). A CSS transition on a
+     property whose value is `var(--…)` freezes on the OLD colour in Chromium
+     when the variable changes — so the accent/theme would appear stuck. Colour
+     changes therefore apply instantly; only transform/shadow effects animate. */
+  .btn {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-line
+      bg-surface px-[11px] py-[7px] text-[0.82rem] font-medium text-fg
+      hover:border-accent pointer-coarse:min-h-10;
+  }
+  .btn-primary {
+    @apply border-accent bg-accent text-[#06211d] hover:border-accent;
   }
 }
 
-/* Smoothly animate every accent-driven colour when the theme colour changes. */
-.glyph circle,
-.glyph path {
-  transition: fill 0.45s ease, stroke 0.45s ease;
-}
-.primary,
-.dot,
-.diagram-types button.active,
-.pane-toggle button[aria-pressed='true'] {
-  transition:
-    background-color 0.45s ease,
-    border-color 0.45s ease,
-    color 0.45s ease,
-    box-shadow 0.45s ease;
-}
-
-.tools {
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
-}
-button {
-  font-family: var(--ui);
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--fg);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 7px 11px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-}
-button:hover {
-  border-color: var(--accent);
-}
-button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #06211d;
-}
-
-/* ---- panes ---- */
-.pane-toggle {
-  display: none;
-  gap: 4px;
-  padding: 6px 0 2px;
-}
-.pane-toggle button {
-  flex: 1;
-  justify-content: center;
-}
-.pane-toggle button[aria-pressed='true'] {
-  background: var(--accent-weak);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-main {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
-  gap: 14px;
-  padding-block: 14px;
-}
-.pane {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--surface);
-}
-.pane-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.pane-head .count {
-  margin-left: auto;
-  font-family: var(--mono);
-  letter-spacing: 0;
-  text-transform: none;
-}
-.diagram-types {
-  display: flex;
-  gap: 3px;
-  padding: 3px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-}
-.diagram-types button {
-  padding: 3px 10px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: none;
-  color: var(--muted);
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s;
-}
-.diagram-types button:hover {
-  color: var(--fg);
-}
-.diagram-types button.active {
-  color: var(--accent);
-  background: var(--surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-}
-.pane-head button.clear {
-  padding: 3px 10px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: var(--accent-weak);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
-}
-.pane-head button.clear:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-weak);
-  box-shadow: 0 0 0 3px var(--accent-weak);
-}
-.pane-head button.clear:active {
-  transform: translateY(1px);
-}
-.pane-head button.clear:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-#editor {
-  flex: 1;
-  width: 100%;
-  resize: none;
-  border: 0;
-  outline: none;
-  background: var(--panel);
-  color: var(--fg);
-  font-family: var(--mono);
-  font-size: 13px;
-  line-height: 1.65;
-  padding: 14px;
-  tab-size: 2;
-  min-height: 0;
-}
-::placeholder {
-  color: var(--muted);
-}
-
+/* ---------------------------------------------------------------------------
+   Canvas + library-injected DOM — markmap and the d3 diagrams render their own
+   SVG/HTML, so these must stay as plain selectors (utilities can't reach them).
+--------------------------------------------------------------------------- */
 .canvas-wrap {
-  position: relative;
-  flex: 1;
-  min-height: 0;
   background: radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0) 0 0 / 22px 22px;
 }
-/* markmap stays a normal-flow element (as it needs to measure its nodes). */
+
+/* markmap stays a normal-flow element (it needs to measure its own nodes). */
 #mindmap {
   width: 100%;
   height: 100%;
@@ -382,6 +129,10 @@ main {
      (otherwise fenced code renders in jarring white boxes on a dark canvas). */
   --markmap-code-bg: var(--panel);
   --markmap-code-color: var(--fg);
+}
+#mindmap .markmap-foreign {
+  color: var(--fg);
+  font-family: var(--ui);
 }
 #mindmap .markmap-foreign code {
   border: 1px solid var(--border);
@@ -401,51 +152,7 @@ main {
 #diagram.inactive {
   display: none;
 }
-#mindmap .markmap-foreign {
-  color: var(--fg);
-  font-family: var(--ui);
-}
-
-/* Import preloader overlay */
-.preloader {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: blur(2px);
-}
-.preloader-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 22px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--fg);
-}
-.spinner {
-  width: 22px;
-  height: 22px;
-  flex: none;
-  border-radius: 50%;
-  border: 2.5px solid var(--border);
-  border-top-color: var(--accent);
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Full-label tooltip for truncated diagram nodes. */
+/* Full-label tooltip for truncated diagram nodes (created in JS). */
 .diagram-tip {
   position: fixed;
   z-index: 1000;
@@ -462,170 +169,14 @@ main {
   pointer-events: none;
 }
 
-.zoom {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.zoom button {
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  justify-content: center;
-  border-radius: 9px;
-  background: var(--surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-/* ---- footer ---- */
-footer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding-block: 9px;
-  border-top: 1px solid var(--border);
-  font-size: 0.74rem;
-  color: var(--muted);
-}
-footer .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex: none;
-}
-footer .sep {
-  color: var(--border);
-}
-footer .import-hint strong {
-  color: var(--accent);
-  font-weight: 600;
-}
-@media (max-width: 760px) {
-  footer .import-hint,
-  footer .sep-hint {
-    display: none;
-  }
-}
-footer .how {
-  margin-left: auto;
-  background: none;
-  border: 0;
-  padding: 4px 6px;
-  color: var(--muted);
-  font-size: 0.74rem;
-}
-footer .how:hover {
-  color: var(--accent);
-}
-
-/* ---- toast ---- */
-.toast {
-  position: fixed;
-  left: 50%;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%) translateY(14px);
-  background: var(--fg);
-  color: var(--bg);
-  font-size: 0.82rem;
-  font-weight: 500;
-  padding: 9px 15px;
-  border-radius: 999px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s;
-  z-index: 50;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* ---- how-it-works dialog ---- */
-dialog {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  color: var(--fg);
-  max-width: min(560px, 92vw);
-  padding: 0;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
+/* Native dialog backdrop (can't be a utility). */
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.45);
 }
-.doc {
-  padding: 22px 24px;
-}
-.doc h2 {
-  margin: 0 0 4px;
-  font-size: 1.15rem;
-  letter-spacing: -0.01em;
-}
-.doc p.sub {
-  margin: 0 0 16px;
-  color: var(--muted);
-  font-size: 0.86rem;
-}
-.doc ol {
-  margin: 0;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-}
-.doc li {
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-.doc li b {
-  color: var(--accent);
-}
-.doc code {
-  font-family: var(--mono);
-  font-size: 0.82em;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 1px 5px;
-}
-.doc pre {
-  font-family: var(--mono);
-  font-size: 0.76rem;
-  line-height: 1.55;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 12px;
-  overflow-x: auto;
-  margin: 14px 0 0;
-}
-.doc .close {
-  margin-top: 18px;
-  width: 100%;
-  justify-content: center;
-}
 
-/* ---- responsive: stack panes, show toggle ---- */
-@media (max-width: 760px) {
-  main {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-  }
-  .pane-toggle {
-    display: flex;
-  }
-  main[data-active='edit'] #pane-map,
-  main[data-active='map'] #pane-edit {
-    display: none;
-  }
-  main .pane {
-    grid-column: 1;
-    grid-row: 1;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
