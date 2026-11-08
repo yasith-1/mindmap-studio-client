@@ -61,6 +61,51 @@ export function truncate(text, max) {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 }
 
+// A single floating tooltip element, reused by every diagram.
+let tipEl = null;
+function ensureTip() {
+  if (tipEl && tipEl.isConnected) return tipEl;
+  tipEl = document.createElement('div');
+  tipEl.className = 'diagram-tip';
+  tipEl.hidden = true;
+  document.body.appendChild(tipEl);
+  return tipEl;
+}
+
+/**
+ * Show the full label in a floating tooltip when a (usually truncated) node
+ * is hovered. `fullText(d)` returns the text to show, or a falsy value to skip
+ * the tooltip for that node (e.g. when the label isn't truncated).
+ */
+export function attachTooltip(nodeSel, fullText) {
+  const tip = ensureTip();
+  tip.hidden = true;
+
+  const place = (event) => {
+    const pad = 14;
+    tip.style.left = `${event.clientX + pad}px`;
+    tip.style.top = `${event.clientY + pad}px`;
+    const r = tip.getBoundingClientRect();
+    if (r.right > window.innerWidth) tip.style.left = `${event.clientX - r.width - pad}px`;
+    if (r.bottom > window.innerHeight) tip.style.top = `${event.clientY - r.height - pad}px`;
+  };
+
+  nodeSel
+    .on('mouseenter.tip', (event, d) => {
+      const text = fullText(d);
+      if (!text) return;
+      tip.textContent = text;
+      tip.hidden = false;
+      place(event);
+    })
+    .on('mousemove.tip', (event) => {
+      if (!tip.hidden) place(event);
+    })
+    .on('mouseleave.tip', () => {
+      tip.hidden = true;
+    });
+}
+
 /**
  * Make hierarchy nodes draggable. Each node datum carries cartesian centre
  * coordinates on `px`/`py`; dragging updates them, re-positions the node, and
@@ -78,6 +123,7 @@ export function enableNodeDrag(nodeSel, linkSel, linkPath) {
     .on('start', (event) => {
       // Don't let the canvas pan while a node is being dragged.
       event.sourceEvent?.stopPropagation();
+      if (tipEl) tipEl.hidden = true;
     })
     .on('drag', function dragged(event, d) {
       d.px += event.dx;

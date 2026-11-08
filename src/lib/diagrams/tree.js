@@ -1,5 +1,14 @@
 import * as d3 from 'd3';
-import { assignColors, enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
+import {
+  assignColors,
+  attachTooltip,
+  enableNodeDrag,
+  makeZoomable,
+  theme,
+  truncate,
+} from './shared.js';
+
+const MAX_LABEL = 22;
 
 const NODE_W = 170;
 const NODE_H = 34;
@@ -60,7 +69,7 @@ export function renderTree(svgEl, data) {
     .attr('stroke', (d) => (d.depth === 0 ? t.accent : d.color))
     .attr('stroke-width', 1.5);
 
-  const label = node
+  node
     .append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', '0.32em')
@@ -68,10 +77,10 @@ export function renderTree(svgEl, data) {
     .attr('font-family', "'Hanken Grotesk', system-ui, sans-serif")
     .attr('font-weight', (d) => (d.depth === 0 ? 600 : 400))
     .attr('fill', (d) => (d.depth === 0 ? '#fff' : t.fg))
-    .text((d) => truncate(d.data.name, 22));
+    .text((d) => truncate(d.data.name, MAX_LABEL));
 
-  label.append('title').text((d) => d.data.name);
-
+  // Full label on hover when it's been truncated.
+  attachTooltip(node, (d) => (d.data.name.length > MAX_LABEL ? d.data.name : null));
   enableNodeDrag(node, link, linkPath);
 
   requestAnimationFrame(() => fit());

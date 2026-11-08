@@ -1,5 +1,12 @@
 import * as d3 from 'd3';
-import { assignColors, enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
+import {
+  assignColors,
+  attachTooltip,
+  enableNodeDrag,
+  makeZoomable,
+  theme,
+  truncate,
+} from './shared.js';
 
 const PILL_H = 28;
 const MAX_CHARS = 18;
@@ -66,7 +73,7 @@ export function renderConcept(svgEl, data) {
     .attr('stroke', (d) => (d.depth === 0 ? t.accent : d.color))
     .attr('stroke-width', 1.5);
 
-  const label = node
+  node
     .append('text')
     .attr('text-anchor', 'middle')
     .attr('dy', '0.32em')
@@ -76,8 +83,8 @@ export function renderConcept(svgEl, data) {
     .attr('fill', (d) => (d.depth === 0 ? '#fff' : t.fg))
     .text((d) => truncate(d.data.name, MAX_CHARS));
 
-  label.append('title').text((d) => d.data.name);
-
+  // Full label on hover when it's been truncated.
+  attachTooltip(node, (d) => (d.data.name.length > MAX_CHARS ? d.data.name : null));
   enableNodeDrag(node, link, linkPath);
 
   requestAnimationFrame(() => fit());
