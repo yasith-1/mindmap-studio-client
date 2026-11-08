@@ -194,6 +194,32 @@ main {
   letter-spacing: 0;
   text-transform: none;
 }
+.pane-head button.clear {
+  padding: 3px 10px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-weak);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.pane-head button.clear:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-weak);
+  box-shadow: 0 0 0 3px var(--accent-weak);
+}
+.pane-head button.clear:active {
+  transform: translateY(1px);
+}
+.pane-head button.clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 #editor {
   flex: 1;

@@ -54,6 +54,15 @@ export default function App() {
     setMarkdown(examples[exampleOrder[exIdx.current]]);
   };
 
+  const handleClear = () => {
+    // Clear all content, then fall back to the default example text.
+    setMarkdown('');
+    exIdx.current = 0;
+    setMarkdown(examples.readme);
+    setActivePane('edit');
+    flash('Cleared — reset to example');
+  };
+
   const handleImportClick = () => fileRef.current?.click();
   const handleFile = (e) => {
     const file = e.target.files?.[0];
@@ -107,7 +116,12 @@ export default function App() {
       </div>
 
       <main data-active={activePane}>
-        <Editor value={markdown} onChange={setMarkdown} charCount={markdown.length} />
+        <Editor
+          value={markdown}
+          onChange={setMarkdown}
+          charCount={markdown.length}
+          onClear={handleClear}
+        />
         <MindMap
           svgRef={svgRef}
           nodeCount={nodeCount}
