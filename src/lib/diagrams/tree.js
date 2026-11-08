@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { makeZoomable, theme, truncate } from './shared.js';
+import { enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
 
 const NODE_W = 170;
 const NODE_H = 34;
@@ -16,8 +16,20 @@ export function renderTree(svgEl, data) {
   const root = d3.hierarchy(data);
 
   d3.tree().nodeSize([NODE_H + ROW_GAP, NODE_W + COL_GAP])(root);
+  // Cartesian node centres (left-to-right: depth → x, breadth → y).
+  root.each((d) => {
+    d.px = d.y;
+    d.py = d.x;
+  });
 
-  g.append('g')
+  // Soft horizontal cubic between node centres, from current px/py.
+  const linkPath = (d) => {
+    const mx = (d.source.px + d.target.px) / 2;
+    return `M${d.source.px},${d.source.py} C${mx},${d.source.py} ${mx},${d.target.py} ${d.target.px},${d.target.py}`;
+  };
+
+  const link = g
+    .append('g')
     .attr('fill', 'none')
     .attr('stroke', t.muted)
     // non-scaling-stroke keeps links a constant on-screen width at any zoom,
@@ -27,20 +39,14 @@ export function renderTree(svgEl, data) {
     .selectAll('path')
     .data(root.links())
     .join('path')
-    .attr(
-      'd',
-      d3
-        .linkHorizontal()
-        .x((d) => d.y)
-        .y((d) => d.x),
-    );
+    .attr('d', linkPath);
 
   const node = g
     .append('g')
     .selectAll('g')
     .data(root.descendants())
     .join('g')
-    .attr('transform', (d) => `translate(${d.y},${d.x})`);
+    .attr('transform', (d) => `translate(${d.px},${d.py})`);
 
   node
     .append('rect')
@@ -64,6 +70,8 @@ export function renderTree(svgEl, data) {
     .text((d) => truncate(d.data.name, 22));
 
   label.append('title').text((d) => d.data.name);
+
+  enableNodeDrag(node, link, linkPath);
 
   requestAnimationFrame(() => fit());
 

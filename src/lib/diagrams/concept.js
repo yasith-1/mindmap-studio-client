@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { makeZoomable, theme, truncate } from './shared.js';
+import { enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
 
 const PILL_H = 28;
 const MAX_CHARS = 18;
@@ -20,8 +20,19 @@ export function renderConcept(svgEl, data) {
     .size([2 * Math.PI, radius])
     .separation((a, b) => (a.parent === b.parent ? 1 : 2) / Math.max(a.depth, 1))(root);
 
-  // Curved radial links.
-  g.append('g')
+  // Project the radial layout to cartesian node centres (px, py).
+  root.each((d) => {
+    const angle = d.x - Math.PI / 2;
+    d.px = Math.cos(angle) * d.y;
+    d.py = Math.sin(angle) * d.y;
+  });
+
+  // Straight spoke between node centres, from current px/py.
+  const linkPath = (d) =>
+    `M${d.source.px},${d.source.py} L${d.target.px},${d.target.py}`;
+
+  const link = g
+    .append('g')
     .attr('fill', 'none')
     .attr('stroke', t.muted)
     // non-scaling-stroke keeps links a constant on-screen width at any zoom,
@@ -31,25 +42,14 @@ export function renderConcept(svgEl, data) {
     .selectAll('path')
     .data(root.links())
     .join('path')
-    .attr(
-      'd',
-      d3
-        .linkRadial()
-        .angle((d) => d.x)
-        .radius((d) => d.y),
-    );
+    .attr('d', linkPath);
 
   const node = g
     .append('g')
     .selectAll('g')
     .data(root.descendants())
     .join('g')
-    .attr('transform', (d) => {
-      const angle = d.x - Math.PI / 2;
-      const x = Math.cos(angle) * d.y;
-      const y = Math.sin(angle) * d.y;
-      return `translate(${x},${y})`;
-    });
+    .attr('transform', (d) => `translate(${d.px},${d.py})`);
 
   // Pill width estimated from the (truncated) label length.
   const pillW = (d) => Math.min(MAX_CHARS, d.data.name.length) * 7.5 + 26;
@@ -76,6 +76,8 @@ export function renderConcept(svgEl, data) {
     .text((d) => truncate(d.data.name, MAX_CHARS));
 
   label.append('title').text((d) => d.data.name);
+
+  enableNodeDrag(node, link, linkPath);
 
   requestAnimationFrame(() => fit());
 

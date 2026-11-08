@@ -49,6 +49,36 @@ export function truncate(text, max) {
 }
 
 /**
+ * Make hierarchy nodes draggable. Each node datum carries cartesian centre
+ * coordinates on `px`/`py`; dragging updates them, re-positions the node, and
+ * redraws the links. Shows a grab / grabbing hand cursor, and stops the drag
+ * from also panning the zoom canvas.
+ *
+ * @param nodeSel  selection of node <g> elements (data = hierarchy nodes)
+ * @param linkSel  selection of link <path> elements
+ * @param linkPath (d) => path string, computed from d.source/d.target px,py
+ */
+export function enableNodeDrag(nodeSel, linkSel, linkPath) {
+  nodeSel.style('cursor', 'grab');
+  const drag = d3
+    .drag()
+    .on('start', (event) => {
+      // Don't let the canvas pan while a node is being dragged.
+      event.sourceEvent?.stopPropagation();
+    })
+    .on('drag', function dragged(event, d) {
+      d.px += event.dx;
+      d.py += event.dy;
+      d3.select(this).attr('transform', `translate(${d.px},${d.py})`).style('cursor', 'grabbing');
+      linkSel.attr('d', linkPath);
+    })
+    .on('end', function ended() {
+      d3.select(this).style('cursor', 'grab');
+    });
+  nodeSel.call(drag);
+}
+
+/**
  * Prepare an <svg> for a zoomable/pannable d3 drawing.
  * Clears the svg, adds a <g> to draw into, and wires up d3-zoom.
  * Returns the group plus fit / zoom helpers used by the toolbar.

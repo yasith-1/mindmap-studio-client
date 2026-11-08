@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { makeZoomable, theme, truncate } from './shared.js';
+import { enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
 
 const NODE_W = 188;
 const NODE_H = 40;
@@ -16,6 +16,11 @@ export function renderFlow(svgEl, data) {
   const root = d3.hierarchy(data);
 
   d3.tree().nodeSize([NODE_H + ROW_GAP, NODE_W + COL_GAP])(root);
+  // Cartesian node centres (left-to-right: depth → x, breadth → y).
+  root.each((d) => {
+    d.px = d.y;
+    d.py = d.x;
+  });
 
   // Arrowhead marker.
   svg
@@ -34,15 +39,16 @@ export function renderFlow(svgEl, data) {
 
   // Orthogonal connector: out the right of the source, into the left of the target.
   const elbow = (d) => {
-    const sx = d.source.y + NODE_W / 2;
-    const sy = d.source.x;
-    const tx = d.target.y - NODE_W / 2 - 7; // stop short for the arrowhead
-    const ty = d.target.x;
+    const sx = d.source.px + NODE_W / 2;
+    const sy = d.source.py;
+    const tx = d.target.px - NODE_W / 2 - 7; // stop short for the arrowhead
+    const ty = d.target.py;
     const mx = (sx + tx) / 2;
     return `M${sx},${sy} H${mx} V${ty} H${tx}`;
   };
 
-  g.append('g')
+  const link = g
+    .append('g')
     .attr('fill', 'none')
     .attr('stroke', t.muted)
     .attr('stroke-width', 1.5)
@@ -57,7 +63,7 @@ export function renderFlow(svgEl, data) {
     .selectAll('g')
     .data(root.descendants())
     .join('g')
-    .attr('transform', (d) => `translate(${d.y},${d.x})`);
+    .attr('transform', (d) => `translate(${d.px},${d.py})`);
 
   node
     .append('rect')
@@ -81,6 +87,8 @@ export function renderFlow(svgEl, data) {
     .text((d) => truncate(d.data.name, 24));
 
   label.append('title').text((d) => d.data.name);
+
+  enableNodeDrag(node, link, elbow);
 
   requestAnimationFrame(() => fit());
 
