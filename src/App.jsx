@@ -3,14 +3,16 @@ import Toolbar from './components/Toolbar.jsx';
 import Editor from './components/Editor.jsx';
 import MindMap from './components/MindMap.jsx';
 import HowDialog from './components/HowDialog.jsx';
+import Preloader from './components/Preloader.jsx';
 import { useDiagram } from './hooks/useDiagram.js';
+import { useTheme } from './hooks/useTheme.js';
+import { useToast } from './hooks/useToast.js';
+import { useImport } from './hooks/useImport.js';
 import { copyMindmapSvg, copyMindmapPng, downloadMindmapSvg } from './lib/exportSvg.js';
-import { fileToMarkdown } from './lib/importFile.js';
+import { readStored, writeStored } from './lib/storage.js';
 import { examples, exampleOrder } from './data/examples.js';
 
 const DRAFT_KEY = 'mms-draft';
-const ACCENT_KEY = 'mms-accent';
-const THEME_KEY = 'mms-theme';
 
 // Accepted import types — kept in one place for the file input, the button
 // hint, and the footer so the user always knows what they can import.
@@ -19,139 +21,43 @@ const IMPORT_ACCEPT =
 const IMPORT_FORMATS = '.md · .txt · .html · .docx · .pdf';
 
 function loadInitial() {
-  try {
-    const saved = localStorage.getItem(DRAFT_KEY);
-    if (saved && saved.trim()) return saved;
-  } catch {
-    /* storage blocked */
-  }
-  return examples.readme;
-}
-
-/** Normalise any CSS colour to a #rrggbb hex the picker and maths can use. */
-function toHex(value) {
-  const v = (value || '').trim();
-  if (/^#[0-9a-f]{6}$/i.test(v)) return v.toLowerCase();
-  if (/^#[0-9a-f]{3}$/i.test(v)) {
-    return `#${v[1]}${v[1]}${v[2]}${v[2]}${v[3]}${v[3]}`.toLowerCase();
-  }
-  const m = /rgba?\(([^)]+)\)/i.exec(v);
-  if (m) {
-    const [r, g, b] = m[1].split(',').map((n) => parseInt(n, 10));
-    return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
-  }
-  return '';
-}
-
-/** Drive the whole app's colour by setting the accent CSS variables. */
-function applyAccent(hex) {
-  const h = toHex(hex);
-  if (!h) return;
-  const n = parseInt(h.slice(1), 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  const root = document.documentElement;
-  root.style.setProperty('--accent', h);
-  root.style.setProperty('--accent-weak', `rgba(${r}, ${g}, ${b}, 0.16)`);
+  const saved = readStored(DRAFT_KEY);
+  return saved && saved.trim() ? saved : examples.readme;
 }
 
 export default function App() {
   const [markdown, setMarkdown] = useState(loadInitial);
   const [activePane, setActivePane] = useState('edit'); // mobile toggle
   const [howOpen, setHowOpen] = useState(false);
-  const [toast, setToast] = useState('');
   const [diagramType, setDiagramType] = useState('mindmap');
-  const [accent, setAccent] = useState('');
-  const [mode, setMode] = useState('dark');
-  const [importing, setImporting] = useState(false);
   const exIdx = useRef(0);
   const fileRef = useRef(null);
-  const toastTimer = useRef(null);
 
   const { mindmapRef, diagramRef, update, setType, nodeCount, zoomIn, zoomOut, fit } =
     useDiagram();
 
-  // Debounced render whenever the markdown changes.
+  const { toast, flash } = useToast();
+
+  // Re-render the active diagram so its d3 colours follow a theme change.
+  const rerenderActive = useCallback(() => setType(diagramType), [setType, diagramType]);
+  const { accent, mode, changeAccent, toggleMode } = useTheme(rerenderActive);
+
+  const { importing, importFile } = useImport({
+    onImported: (md) => {
+      setMarkdown(md);
+      setActivePane('edit');
+    },
+    flash,
+  });
+
+  // Debounced render + draft persistence whenever the markdown changes.
   useEffect(() => {
     const t = setTimeout(() => {
       update(markdown);
-      try {
-        localStorage.setItem(DRAFT_KEY, markdown);
-      } catch {
-        /* ignore */
-      }
+      writeStored(DRAFT_KEY, markdown);
     }, 180);
     return () => clearTimeout(t);
   }, [markdown, update]);
-
-  // Apply the saved (or system-preferred) light/dark mode on first load.
-  useEffect(() => {
-    let saved = '';
-    try {
-      saved = localStorage.getItem(THEME_KEY) || '';
-    } catch {
-      /* ignore */
-    }
-    const prefersDark =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initial = saved || (prefersDark ? 'dark' : 'light');
-    setMode(initial);
-    document.documentElement.setAttribute('data-theme', initial);
-  }, []);
-
-  const toggleMode = () => {
-    const next = mode === 'dark' ? 'light' : 'dark';
-    setMode(next);
-    document.documentElement.setAttribute('data-theme', next);
-    try {
-      localStorage.setItem(THEME_KEY, next);
-    } catch {
-      /* ignore */
-    }
-    // Re-render the active diagram so its d3 colours follow the new theme.
-    setType(diagramType);
-  };
-
-  // Adopt a saved accent, or seed the picker from the theme's current accent.
-  useEffect(() => {
-    let saved = '';
-    try {
-      saved = localStorage.getItem(ACCENT_KEY) || '';
-    } catch {
-      /* ignore */
-    }
-    if (saved) {
-      applyAccent(saved);
-      setAccent(toHex(saved));
-    } else {
-      const base = getComputedStyle(document.documentElement).getPropertyValue('--accent');
-      setAccent(toHex(base) || '#2dd4bf');
-    }
-  }, []);
-
-  const handleAccentChange = (value, commit) => {
-    const hex = toHex(value);
-    if (!hex) return;
-    setAccent(hex);
-    applyAccent(hex);
-    if (commit) {
-      try {
-        localStorage.setItem(ACCENT_KEY, hex);
-      } catch {
-        /* ignore */
-      }
-      // Re-render the active diagram so its d3 root node picks up the colour.
-      setType(diagramType);
-    }
-  };
-
-  const flash = useCallback((msg) => {
-    setToast(msg);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(''), 1900);
-  }, []);
 
   const handleExample = () => {
     exIdx.current = (exIdx.current + 1) % exampleOrder.length;
@@ -159,8 +65,6 @@ export default function App() {
   };
 
   const handleClear = () => {
-    // Clear all content, then fall back to the default example text.
-    setMarkdown('');
     exIdx.current = 0;
     setMarkdown(examples.readme);
     setActivePane('edit');
@@ -173,27 +77,10 @@ export default function App() {
   };
 
   const handleImportClick = () => fileRef.current?.click();
-  const handleFile = async (e) => {
+  const handleFile = (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
-    setImporting(true);
-    const started = Date.now();
-    try {
-      const { markdown: md, from, arranged } = await fileToMarkdown(file);
-      setMarkdown(md);
-      setActivePane('edit');
-      if (arranged) flash(`Structured ${from ? `${from} ` : ''}content into a map`);
-      else if (from) flash(`Converted ${from} → Markdown`);
-      else flash(`Loaded ${file.name}`);
-    } catch (err) {
-      flash(err?.message || 'Could not import that file');
-    } finally {
-      // Keep the preloader up long enough to be seen on fast imports.
-      const elapsed = Date.now() - started;
-      if (elapsed < 400) await new Promise((r) => setTimeout(r, 400 - elapsed));
-      setImporting(false);
-    }
+    importFile(file);
   };
 
   const activeSvg = () =>
@@ -231,7 +118,7 @@ export default function App() {
         onCopyPng={handleCopyPng}
         onDownload={handleDownload}
         accent={accent}
-        onAccentChange={handleAccentChange}
+        onAccentChange={changeAccent}
         mode={mode}
         onToggleMode={toggleMode}
       />
@@ -288,14 +175,7 @@ export default function App() {
       <div className={`toast${toast ? ' show' : ''}`} role="status" aria-live="polite">
         {toast}
       </div>
-      {importing && (
-        <div className="preloader" role="status" aria-live="polite">
-          <div className="preloader-card">
-            <div className="spinner" />
-            <span>Processing file — building your map…</span>
-          </div>
-        </div>
-      )}
+      <Preloader show={importing} />
       <HowDialog open={howOpen} onClose={() => setHowOpen(false)} />
     </div>
   );
