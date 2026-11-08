@@ -1,0 +1,23 @@
+{
+  "name": "mindmap-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Markdown to mind map — live preview, built with React + markmap",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "d3": "7.9.0",
+    "markmap-lib": "0.18.12",
+    "markmap-view": "0.18.12",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.3.3",
+    "vite": "5.4.10"
+  }
+}
