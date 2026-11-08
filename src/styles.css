@@ -194,6 +194,35 @@ main {
   letter-spacing: 0;
   text-transform: none;
 }
+.diagram-types {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.diagram-types button {
+  padding: 3px 10px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.diagram-types button:hover {
+  color: var(--fg);
+}
+.diagram-types button.active {
+  color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
 .pane-head button.clear {
   padding: 3px 10px;
   font-size: 0.68rem;
@@ -246,10 +275,25 @@ main {
   min-height: 0;
   background: radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0) 0 0 / 22px 22px;
 }
+/* markmap stays a normal-flow element (as it needs to measure its nodes). */
 #mindmap {
   width: 100%;
   height: 100%;
   display: block;
+}
+/* The d3 diagrams render on an overlay canvas above markmap. */
+#diagram {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+#mindmap.inactive {
+  visibility: hidden; /* keep layout size so markmap keeps measuring/fitting */
+}
+#diagram.inactive {
+  display: none;
 }
 #mindmap .markmap-foreign {
   color: var(--fg);

@@ -3,7 +3,7 @@ import Toolbar from './components/Toolbar.jsx';
 import Editor from './components/Editor.jsx';
 import MindMap from './components/MindMap.jsx';
 import HowDialog from './components/HowDialog.jsx';
-import { useMindmap } from './hooks/useMindmap.js';
+import { useDiagram } from './hooks/useDiagram.js';
 import { copyMindmapSvg, downloadMindmapSvg } from './lib/exportSvg.js';
 import { examples, exampleOrder } from './data/examples.js';
 
@@ -24,11 +24,13 @@ export default function App() {
   const [activePane, setActivePane] = useState('edit'); // mobile toggle
   const [howOpen, setHowOpen] = useState(false);
   const [toast, setToast] = useState('');
+  const [diagramType, setDiagramType] = useState('mindmap');
   const exIdx = useRef(0);
   const fileRef = useRef(null);
   const toastTimer = useRef(null);
 
-  const { svgRef, update, nodeCount, zoomIn, zoomOut, fit } = useMindmap();
+  const { mindmapRef, diagramRef, update, setType, nodeCount, zoomIn, zoomOut, fit } =
+    useDiagram();
 
   // Debounced render whenever the markdown changes.
   useEffect(() => {
@@ -63,6 +65,11 @@ export default function App() {
     flash('Cleared — reset to example');
   };
 
+  const handleTypeChange = (type) => {
+    setDiagramType(type);
+    setType(type);
+  };
+
   const handleImportClick = () => fileRef.current?.click();
   const handleFile = (e) => {
     const file = e.target.files?.[0];
@@ -77,9 +84,12 @@ export default function App() {
     e.target.value = '';
   };
 
+  const activeSvg = () =>
+    diagramType === 'mindmap' ? mindmapRef.current : diagramRef.current;
+
   const handleCopy = async () => {
     try {
-      await copyMindmapSvg(svgRef.current);
+      await copyMindmapSvg(activeSvg());
       flash('SVG copied to clipboard');
     } catch {
       flash('Copy failed — try Download');
@@ -87,8 +97,8 @@ export default function App() {
   };
 
   const handleDownload = () => {
-    downloadMindmapSvg(svgRef.current, 'mindmap.svg');
-    flash('Downloading mindmap.svg');
+    downloadMindmapSvg(activeSvg(), `${diagramType}.svg`);
+    flash(`Downloading ${diagramType}.svg`);
   };
 
   return (
@@ -123,8 +133,11 @@ export default function App() {
           onClear={handleClear}
         />
         <MindMap
-          svgRef={svgRef}
+          mindmapRef={mindmapRef}
+          diagramRef={diagramRef}
           nodeCount={nodeCount}
+          diagramType={diagramType}
+          onTypeChange={handleTypeChange}
           onZoomIn={zoomIn}
           onZoomOut={zoomOut}
           onFit={fit}
