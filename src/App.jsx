@@ -15,8 +15,8 @@ const THEME_KEY = 'mms-theme';
 // Accepted import types — kept in one place for the file input, the button
 // hint, and the footer so the user always knows what they can import.
 const IMPORT_ACCEPT =
-  '.md,.markdown,.txt,.html,.htm,.docx,text/markdown,text/plain,text/html,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-const IMPORT_FORMATS = '.md · .txt · .html · .docx';
+  '.md,.markdown,.txt,.html,.htm,.docx,.pdf,text/markdown,text/plain,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const IMPORT_FORMATS = '.md · .txt · .html · .docx · .pdf';
 
 function loadInitial() {
   try {
