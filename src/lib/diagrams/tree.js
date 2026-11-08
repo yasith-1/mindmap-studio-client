@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
+import { assignColors, enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
 
 const NODE_W = 170;
 const NODE_H = 34;
@@ -16,6 +16,7 @@ export function renderTree(svgEl, data) {
   const root = d3.hierarchy(data);
 
   d3.tree().nodeSize([NODE_H + ROW_GAP, NODE_W + COL_GAP])(root);
+  assignColors(root);
   // Cartesian node centres (left-to-right: depth → x, breadth → y).
   root.each((d) => {
     d.px = d.y;
@@ -31,7 +32,6 @@ export function renderTree(svgEl, data) {
   const link = g
     .append('g')
     .attr('fill', 'none')
-    .attr('stroke', t.muted)
     // non-scaling-stroke keeps links a constant on-screen width at any zoom,
     // so they stay clearly visible even at the fully-fitted (zoomed-out) view.
     .attr('stroke-width', 1.5)
@@ -39,6 +39,7 @@ export function renderTree(svgEl, data) {
     .selectAll('path')
     .data(root.links())
     .join('path')
+    .attr('stroke', (d) => d.target.color) // colour each branch, markmap-style
     .attr('d', linkPath);
 
   const node = g
@@ -56,7 +57,7 @@ export function renderTree(svgEl, data) {
     .attr('height', NODE_H)
     .attr('rx', 9)
     .attr('fill', (d) => (d.depth === 0 ? t.accent : t.surface))
-    .attr('stroke', (d) => (d.depth === 0 ? t.accent : t.border))
+    .attr('stroke', (d) => (d.depth === 0 ? t.accent : d.color))
     .attr('stroke-width', 1.5);
 
   const label = node

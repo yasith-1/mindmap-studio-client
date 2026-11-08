@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
+import { assignColors, enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
 
 const NODE_W = 188;
 const NODE_H = 40;
@@ -16,13 +16,14 @@ export function renderFlow(svgEl, data) {
   const root = d3.hierarchy(data);
 
   d3.tree().nodeSize([NODE_H + ROW_GAP, NODE_W + COL_GAP])(root);
+  assignColors(root);
   // Cartesian node centres (left-to-right: depth → x, breadth → y).
   root.each((d) => {
     d.px = d.y;
     d.py = d.x;
   });
 
-  // Arrowhead marker.
+  // Arrowhead marker — `context-stroke` makes each arrow take its link's colour.
   svg
     .append('defs')
     .append('marker')
@@ -35,7 +36,7 @@ export function renderFlow(svgEl, data) {
     .attr('orient', 'auto-start-reverse')
     .append('path')
     .attr('d', 'M0,0 L10,5 L0,10 z')
-    .attr('fill', t.muted);
+    .attr('fill', 'context-stroke');
 
   // Orthogonal connector: out the right of the source, into the left of the target.
   const elbow = (d) => {
@@ -50,11 +51,11 @@ export function renderFlow(svgEl, data) {
   const link = g
     .append('g')
     .attr('fill', 'none')
-    .attr('stroke', t.muted)
     .attr('stroke-width', 1.5)
     .selectAll('path')
     .data(root.links())
     .join('path')
+    .attr('stroke', (d) => d.target.color) // colour each branch, markmap-style
     .attr('d', elbow)
     .attr('marker-end', 'url(#flow-arrow)');
 
@@ -73,7 +74,7 @@ export function renderFlow(svgEl, data) {
     .attr('height', NODE_H)
     .attr('rx', 4)
     .attr('fill', (d) => (d.depth === 0 ? t.accent : t.surface))
-    .attr('stroke', t.accent)
+    .attr('stroke', (d) => (d.depth === 0 ? t.accent : d.color))
     .attr('stroke-width', (d) => (d.depth === 0 ? 1.5 : 2));
 
   const label = node

@@ -42,6 +42,19 @@ export function theme() {
   };
 }
 
+// A categorical palette echoing markmap's coloured branches.
+const BRANCH_PALETTE = d3.schemeCategory10;
+
+/**
+ * Assign each node a branch colour (markmap-style) on `d.color`, cycling a
+ * categorical palette in traversal order so siblings and branches differ.
+ */
+export function assignColors(root) {
+  root.descendants().forEach((d, i) => {
+    d.color = BRANCH_PALETTE[i % BRANCH_PALETTE.length];
+  });
+}
+
 /** Truncate a label and keep it tidy for a fixed-width node. */
 export function truncate(text, max) {
   if (!text) return '';

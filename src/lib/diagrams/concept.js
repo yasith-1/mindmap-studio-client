@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
+import { assignColors, enableNodeDrag, makeZoomable, theme, truncate } from './shared.js';
 
 const PILL_H = 28;
 const MAX_CHARS = 18;
@@ -19,6 +19,7 @@ export function renderConcept(svgEl, data) {
     .tree()
     .size([2 * Math.PI, radius])
     .separation((a, b) => (a.parent === b.parent ? 1 : 2) / Math.max(a.depth, 1))(root);
+  assignColors(root);
 
   // Project the radial layout to cartesian node centres (px, py).
   root.each((d) => {
@@ -34,7 +35,6 @@ export function renderConcept(svgEl, data) {
   const link = g
     .append('g')
     .attr('fill', 'none')
-    .attr('stroke', t.muted)
     // non-scaling-stroke keeps links a constant on-screen width at any zoom,
     // so they stay clearly visible even at the fully-fitted (zoomed-out) view.
     .attr('stroke-width', 1.5)
@@ -42,6 +42,7 @@ export function renderConcept(svgEl, data) {
     .selectAll('path')
     .data(root.links())
     .join('path')
+    .attr('stroke', (d) => d.target.color) // colour each branch, markmap-style
     .attr('d', linkPath);
 
   const node = g
@@ -62,7 +63,7 @@ export function renderConcept(svgEl, data) {
     .attr('height', PILL_H)
     .attr('rx', PILL_H / 2)
     .attr('fill', (d) => (d.depth === 0 ? t.accent : t.surface))
-    .attr('stroke', (d) => (d.depth === 0 ? t.accent : t.border))
+    .attr('stroke', (d) => (d.depth === 0 ? t.accent : d.color))
     .attr('stroke-width', 1.5);
 
   const label = node
