@@ -5,11 +5,18 @@ import MindMap from './components/MindMap.jsx';
 import HowDialog from './components/HowDialog.jsx';
 import { useDiagram } from './hooks/useDiagram.js';
 import { copyMindmapSvg, copyMindmapPng, downloadMindmapSvg } from './lib/exportSvg.js';
+import { fileToMarkdown } from './lib/importFile.js';
 import { examples, exampleOrder } from './data/examples.js';
 
 const DRAFT_KEY = 'mms-draft';
 const ACCENT_KEY = 'mms-accent';
 const THEME_KEY = 'mms-theme';
+
+// Accepted import types — kept in one place for the file input, the button
+// hint, and the footer so the user always knows what they can import.
+const IMPORT_ACCEPT =
+  '.md,.markdown,.txt,.html,.htm,.docx,text/markdown,text/plain,text/html,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const IMPORT_FORMATS = '.md · .txt · .html · .docx';
 
 function loadInitial() {
   try {
@@ -57,6 +64,7 @@ export default function App() {
   const [diagramType, setDiagramType] = useState('mindmap');
   const [accent, setAccent] = useState('');
   const [mode, setMode] = useState('dark');
+  const [importing, setImporting] = useState(false);
   const exIdx = useRef(0);
   const fileRef = useRef(null);
   const toastTimer = useRef(null);
@@ -165,17 +173,27 @@ export default function App() {
   };
 
   const handleImportClick = () => fileRef.current?.click();
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setMarkdown(String(reader.result));
-      setActivePane('edit');
-      flash(`Loaded ${file.name}`);
-    };
-    reader.readAsText(file);
     e.target.value = '';
+    if (!file) return;
+    setImporting(true);
+    const started = Date.now();
+    try {
+      const { markdown: md, from, arranged } = await fileToMarkdown(file);
+      setMarkdown(md);
+      setActivePane('edit');
+      if (arranged) flash(`Structured ${from ? `${from} ` : ''}content into a map`);
+      else if (from) flash(`Converted ${from} → Markdown`);
+      else flash(`Loaded ${file.name}`);
+    } catch (err) {
+      flash(err?.message || 'Could not import that file');
+    } finally {
+      // Keep the preloader up long enough to be seen on fast imports.
+      const elapsed = Date.now() - started;
+      if (elapsed < 400) await new Promise((r) => setTimeout(r, 400 - elapsed));
+      setImporting(false);
+    }
   };
 
   const activeSvg = () =>
@@ -257,21 +275,27 @@ export default function App() {
         <span>Live preview · updates as you type</span>
         <span className="sep">|</span>
         <span>Tip: scroll to zoom, drag to pan</span>
+        <span className="sep sep-hint">|</span>
+        <span className="import-hint">
+          Import accepts <strong>{IMPORT_FORMATS}</strong> — other text is converted
+        </span>
         <button className="how" onClick={() => setHowOpen(true)}>
           How this works ↗
         </button>
       </footer>
 
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".md,.markdown,.txt,text/markdown,text/plain"
-        hidden
-        onChange={handleFile}
-      />
+      <input ref={fileRef} type="file" accept={IMPORT_ACCEPT} hidden onChange={handleFile} />
       <div className={`toast${toast ? ' show' : ''}`} role="status" aria-live="polite">
         {toast}
       </div>
+      {importing && (
+        <div className="preloader" role="status" aria-live="polite">
+          <div className="preloader-card">
+            <div className="spinner" />
+            <span>Processing file — building your map…</span>
+          </div>
+        </div>
+      )}
       <HowDialog open={howOpen} onClose={() => setHowOpen(false)} />
     </div>
   );

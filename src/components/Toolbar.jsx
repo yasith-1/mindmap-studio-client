@@ -85,7 +85,7 @@ export default function Toolbar({
         <button onClick={onExample} title="Load a sample document">
           <BookIcon width="15" height="15" /> Example
         </button>
-        <button onClick={onImport} title="Import a .md / README file">
+        <button onClick={onImport} title="Import Markdown, HTML or Word — non-Markdown is converted">
           <ImportIcon width="15" height="15" /> Import
         </button>
         <button onClick={onCopy} title="Copy the diagram as SVG">

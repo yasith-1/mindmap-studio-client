@@ -406,6 +406,45 @@ main {
   font-family: var(--ui);
 }
 
+/* Import preloader overlay */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(2px);
+}
+.preloader-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--fg);
+}
+.spinner {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Full-label tooltip for truncated diagram nodes. */
 .diagram-tip {
   position: fixed;
@@ -461,6 +500,16 @@ footer .dot {
 }
 footer .sep {
   color: var(--border);
+}
+footer .import-hint strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+@media (max-width: 760px) {
+  footer .import-hint,
+  footer .sep-hint {
+    display: none;
+  }
 }
 footer .how {
   margin-left: auto;

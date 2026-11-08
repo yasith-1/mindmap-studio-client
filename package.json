@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "d3": "7.9.0",
+    "mammoth": "^1.13.0",
     "markmap-lib": "0.18.12",
     "markmap-view": "0.18.12",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "turndown": "^7.2.5",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "4.3.3",
