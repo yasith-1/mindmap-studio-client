@@ -1,9 +1,17 @@
-import { BookIcon, ImportIcon, CopyIcon, DownloadIcon } from './Icons.jsx';
+import { BookIcon, ImportIcon, CopyIcon, ImageIcon, DownloadIcon } from './Icons.jsx';
 
 // Preset accent colours; the custom picker covers everything else.
 const PRESETS = ['#2dd4bf', '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#22c55e'];
 
-export default function Toolbar({ onExample, onImport, onCopy, onDownload, accent, onAccentChange }) {
+export default function Toolbar({
+  onExample,
+  onImport,
+  onCopy,
+  onCopyPng,
+  onDownload,
+  accent,
+  onAccentChange,
+}) {
   const current = (accent || '').toLowerCase();
   return (
     <header className="toolbar">
@@ -57,8 +65,11 @@ export default function Toolbar({ onExample, onImport, onCopy, onDownload, accen
         <button onClick={onImport} title="Import a .md / README file">
           <ImportIcon width="15" height="15" /> Import
         </button>
-        <button onClick={onCopy} title="Copy the mind map as SVG">
+        <button onClick={onCopy} title="Copy the diagram as SVG">
           <CopyIcon width="15" height="15" /> Copy SVG
+        </button>
+        <button onClick={onCopyPng} title="Copy the diagram as a PNG image">
+          <ImageIcon width="15" height="15" /> Copy PNG
         </button>
         <button className="primary" onClick={onDownload} title="Download the mind map as an SVG file">
           <DownloadIcon width="15" height="15" /> Download

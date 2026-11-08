@@ -4,7 +4,7 @@ import Editor from './components/Editor.jsx';
 import MindMap from './components/MindMap.jsx';
 import HowDialog from './components/HowDialog.jsx';
 import { useDiagram } from './hooks/useDiagram.js';
-import { copyMindmapSvg, downloadMindmapSvg } from './lib/exportSvg.js';
+import { copyMindmapSvg, copyMindmapPng, downloadMindmapSvg } from './lib/exportSvg.js';
 import { examples, exampleOrder } from './data/examples.js';
 
 const DRAFT_KEY = 'mms-draft';
@@ -159,6 +159,15 @@ export default function App() {
     }
   };
 
+  const handleCopyPng = async () => {
+    try {
+      await copyMindmapPng(activeSvg());
+      flash('PNG copied to clipboard');
+    } catch {
+      flash('PNG copy failed — try Download');
+    }
+  };
+
   const handleDownload = () => {
     downloadMindmapSvg(activeSvg(), `${diagramType}.svg`);
     flash(`Downloading ${diagramType}.svg`);
@@ -170,6 +179,7 @@ export default function App() {
         onExample={handleExample}
         onImport={handleImportClick}
         onCopy={handleCopy}
+        onCopyPng={handleCopyPng}
         onDownload={handleDownload}
         accent={accent}
         onAccentChange={handleAccentChange}
