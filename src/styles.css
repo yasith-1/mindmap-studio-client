@@ -354,6 +354,14 @@ main {
   width: 100%;
   height: 100%;
   display: block;
+  /* Make markmap's code blocks follow our theme instead of its light default
+     (otherwise fenced code renders in jarring white boxes on a dark canvas). */
+  --markmap-code-bg: var(--panel);
+  --markmap-code-color: var(--fg);
+}
+#mindmap .markmap-foreign code {
+  border: 1px solid var(--border);
+  border-radius: 6px;
 }
 /* The d3 diagrams render on an overlay canvas above markmap. */
 #diagram {
