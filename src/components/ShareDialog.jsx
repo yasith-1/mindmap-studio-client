@@ -9,6 +9,7 @@ import {
   TrashIcon,
   SpinnerIcon,
 } from './Icons.jsx';
+import PasswordInput from './PasswordInput.jsx';
 
 const MODES = [
   { id: 'public', label: 'Public', Icon: GlobeIcon, desc: 'Anyone with the link can view it, anytime.' },
@@ -129,13 +130,14 @@ export default function ShareDialog({ open, onClose, map, flash }) {
         </div>
 
         {mode === 'protected' && (
-          <input
-            type="text"
-            value={passcode}
-            onChange={(e) => setPasscode(e.target.value)}
-            placeholder="Set a passcode (min 4 chars)"
-            className="mt-3 w-full rounded-lg border border-line bg-panel px-3 py-2.5 text-[0.9rem] text-fg outline-none focus:border-accent"
-          />
+          <div className="mt-3">
+            <PasswordInput
+              value={passcode}
+              onChange={setPasscode}
+              placeholder="Set a passcode (min 4 chars)"
+              autoComplete="new-password"
+            />
+          </div>
         )}
 
         {error && <p className="mb-0 mt-3 text-[0.8rem] text-[#f43f5e]">{error}</p>}

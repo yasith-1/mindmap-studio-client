@@ -4,6 +4,7 @@ import { useDiagram } from '../hooks/useDiagram.js';
 import { useTheme } from '../hooks/useTheme.js';
 import { api } from '../lib/api.js';
 import { LockIcon, EyeIcon, SunIcon, MoonIcon, SpinnerIcon } from './Icons.jsx';
+import PasswordInput from './PasswordInput.jsx';
 
 // Overlay states before the map is shown.
 const GATE = { LOADING: 'loading', PROTECTED: 'protected', ONETIME: 'onetime', USED: 'used', ERROR: 'error', DONE: 'done' };
@@ -146,14 +147,15 @@ export default function ShareView({ token }) {
                   <LockIcon width="26" height="26" className="mx-auto mb-3 text-accent" />
                   <h2 className="mb-1 mt-0 text-[1.05rem]">Passcode required</h2>
                   <p className="mb-4 mt-0 text-[0.84rem] text-muted">Enter the passcode to view this map.</p>
-                  <input
-                    type="text"
-                    autoFocus
-                    value={passcode}
-                    onChange={(e) => setPasscode(e.target.value)}
-                    placeholder="Passcode"
-                    className="mb-3 w-full rounded-lg border border-line bg-panel px-3 py-2.5 text-center text-[0.95rem] text-fg outline-none focus:border-accent"
-                  />
+                  <div className="mb-3">
+                    <PasswordInput
+                      value={passcode}
+                      onChange={setPasscode}
+                      placeholder="Passcode"
+                      autoFocus
+                      autoComplete="off"
+                    />
+                  </div>
                   {error && <p className="mb-3 mt-0 text-[0.8rem] text-[#f43f5e]">{error}</p>}
                   <button type="submit" disabled={busy} className="btn btn-primary w-full justify-center disabled:opacity-60">
                     {busy ? <SpinnerIcon width="15" height="15" /> : null} Unlock
