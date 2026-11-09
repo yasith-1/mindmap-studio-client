@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { SpinnerIcon, TrashIcon, MapsIcon } from './Icons.jsx';
+import { SpinnerIcon, TrashIcon, MapsIcon, DownloadIcon } from './Icons.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 
 /** Formats an ISO date as a short, friendly "updated" label. */
@@ -13,10 +13,22 @@ function when(iso) {
  * Lists the signed-in user's cloud mind maps. Clicking one loads it into the
  * editor; the trash button deletes it. Refreshes the list each time it opens.
  */
-export default function MapsDialog({ open, onClose, maps, loading, currentId, onRefresh, onOpenMap, onDelete }) {
+export default function MapsDialog({ open, onClose, maps, loading, currentId, onRefresh, onOpenMap, onDownload, onDelete }) {
   const ref = useRef(null);
   // The map awaiting delete confirmation (null = no confirm open).
   const [pendingDelete, setPendingDelete] = useState(null);
+  // Id of the map currently being rendered to PNG (shows a spinner).
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const handleDownload = async (map) => {
+    if (downloadingId) return;
+    setDownloadingId(map.id);
+    try {
+      await onDownload(map);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   useEffect(() => {
     const el = ref.current;
@@ -71,6 +83,20 @@ export default function MapsDialog({ open, onClose, maps, loading, currentId, on
                     {m.title || 'Untitled'}
                   </span>
                   <span className="text-[0.72rem] text-muted">{when(m.updatedAt)}</span>
+                </button>
+                <button
+                  type="button"
+                  className="flex-none cursor-pointer rounded-md border border-transparent p-1.5 text-muted hover:border-line hover:text-accent disabled:opacity-60"
+                  title="Download as PNG"
+                  aria-label={`Download ${m.title || 'Untitled'} as PNG`}
+                  disabled={downloadingId === m.id}
+                  onClick={() => handleDownload(m)}
+                >
+                  {downloadingId === m.id ? (
+                    <SpinnerIcon width="15" height="15" />
+                  ) : (
+                    <DownloadIcon width="15" height="15" />
+                  )}
                 </button>
                 <button
                   type="button"

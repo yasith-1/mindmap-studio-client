@@ -12,7 +12,8 @@ import { useToast } from './hooks/useToast.js';
 import { useImport } from './hooks/useImport.js';
 import { useAuth } from './hooks/useAuth.js';
 import { useMindmaps } from './hooks/useMindmaps.js';
-import { copyMindmapSvg, copyMindmapPng, downloadMindmapSvg } from './lib/exportSvg.js';
+import { copyMindmapSvg, copyMindmapPng, downloadMindmapSvg, downloadBlob } from './lib/exportSvg.js';
+import { renderMapToPngBlob } from './lib/exportMap.js';
 import { readStored, writeStored } from './lib/storage.js';
 import { examples, exampleOrder } from './data/examples.js';
 
@@ -128,6 +129,14 @@ export default function App() {
     logout();
     cloud.reset();
     flash('Signed out');
+  };
+
+  // Render a saved map off-screen and download it as a high-res PNG.
+  const handleDownloadMap = async (map) => {
+    const name = (map.title || 'mindmap').replace(/[^\w\- ]+/g, '').trim() || 'mindmap';
+    const blob = await renderMapToPngBlob(map.markdown ?? '', map.kind ?? 'mindmap', 3);
+    downloadBlob(blob, `${name}.png`);
+    flash(`Downloaded ${name}.png`);
   };
 
   const handleImportClick = () => fileRef.current?.click();
@@ -276,6 +285,7 @@ export default function App() {
         currentId={cloud.currentId}
         onRefresh={cloud.refresh}
         onOpenMap={handleOpenMap}
+        onDownload={handleDownloadMap}
         onDelete={cloud.remove}
       />
     </div>

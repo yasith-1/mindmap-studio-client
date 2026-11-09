@@ -118,23 +118,31 @@ function svgToPngBlob(svg, width, height, scale = 2) {
   });
 }
 
-export async function copyMindmapPng(svgEl) {
+// Rasterise a rendered diagram <svg> to a PNG blob. `scale` multiplies the
+// pixel dimensions for a crisp, high-resolution image (3× by default).
+export async function svgElementToPngBlob(svgEl, scale = 3) {
   if (!svgEl) throw new Error('No diagram');
   const { svg, width, height } = buildSvg(svgEl, { rasterSafe: true });
-  // Await the blob first so a rasterisation failure throws here (rather than
-  // leaving a stale image on the clipboard) and the caller can report it.
-  const blob = await svgToPngBlob(svg, width, height);
+  return svgToPngBlob(svg, width, height, scale);
+}
+
+export async function copyMindmapPng(svgEl) {
+  const blob = await svgElementToPngBlob(svgEl, 2);
   await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
 }
 
-// In a real deployment (unlike a sandboxed preview) this triggers a download.
-export function downloadMindmapSvg(svgEl, filename = 'mindmap.svg') {
-  const svg = serializeMindmap(svgEl);
-  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+// Trigger a browser download of a blob (works in a real deployment; the
+// sandboxed preview pane blocks downloads).
+export function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export function downloadMindmapSvg(svgEl, filename = 'mindmap.svg') {
+  const svg = serializeMindmap(svgEl);
+  downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), filename);
 }
