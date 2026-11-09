@@ -51,4 +51,13 @@ export const api = {
   createMap: (data) => request('/mindmaps', { method: 'POST', body: data, auth: true }),
   updateMap: (id, data) => request(`/mindmaps/${id}`, { method: 'PUT', body: data, auth: true }),
   deleteMap: (id) => request(`/mindmaps/${id}`, { method: 'DELETE', auth: true }),
+
+  // ── Share links ──────────────────────────────────────
+  // Owner (authenticated)
+  createShare: (mapId, body) => request(`/mindmaps/${mapId}/share`, { method: 'POST', body, auth: true }),
+  listShares: (mapId) => request(`/mindmaps/${mapId}/shares`, { auth: true }),
+  revokeShare: (token) => request(`/shares/${token}`, { method: 'DELETE', auth: true }),
+  // Public (no auth)
+  getShareMeta: (token) => request(`/share/${token}`),
+  openShare: (token, passcode) => request(`/share/${token}/open`, { method: 'POST', body: { passcode } }),
 };

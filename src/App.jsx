@@ -287,6 +287,7 @@ export default function App() {
         onOpenMap={handleOpenMap}
         onDownload={handleDownloadMap}
         onDelete={cloud.remove}
+        flash={flash}
       />
     </div>
   );

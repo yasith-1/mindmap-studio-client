@@ -122,3 +122,46 @@ export const SpinnerIcon = ({ className = '', ...p }) => (
     <path d="M21 12a9 9 0 1 1-6.22-8.56" />
   </svg>
 );
+
+export const ShareIcon = (p) => (
+  <svg {...base} {...p}>
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
+  </svg>
+);
+
+export const GlobeIcon = (p) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" />
+  </svg>
+);
+
+export const LockIcon = (p) => (
+  <svg {...base} {...p}>
+    <rect x="4" y="11" width="16" height="10" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+  </svg>
+);
+
+export const EyeIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+export const LinkIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1" />
+    <path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1" />
+  </svg>
+);
+
+export const CheckIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M20 6L9 17l-5-5" />
+  </svg>
+);
