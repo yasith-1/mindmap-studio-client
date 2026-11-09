@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Toolbar from './components/Toolbar.jsx';
 import Editor from './components/Editor.jsx';
-import MindMap from './components/MindMap.jsx';
+import MindMap, { typeLabel } from './components/MindMap.jsx';
 import HowDialog from './components/HowDialog.jsx';
+import AuthDialog from './components/AuthDialog.jsx';
+import MapsDialog from './components/MapsDialog.jsx';
 import Preloader from './components/Preloader.jsx';
 import { useDiagram } from './hooks/useDiagram.js';
 import { useTheme } from './hooks/useTheme.js';
 import { useToast } from './hooks/useToast.js';
 import { useImport } from './hooks/useImport.js';
+import { useAuth } from './hooks/useAuth.js';
+import { useMindmaps } from './hooks/useMindmaps.js';
 import { copyMindmapSvg, copyMindmapPng, downloadMindmapSvg } from './lib/exportSvg.js';
 import { readStored, writeStored } from './lib/storage.js';
 import { examples, exampleOrder } from './data/examples.js';
@@ -25,10 +29,25 @@ function loadInitial() {
   return saved && saved.trim() ? saved : examples.readme;
 }
 
+// Derive a map title from its Markdown: first heading or first non-empty line.
+function deriveTitle(md) {
+  const line = md.split('\n').map((l) => l.trim()).find(Boolean) ?? '';
+  const title = line.replace(/^#+\s*/, '').replace(/^[-*]\s*/, '').trim();
+  return (title || 'Untitled').slice(0, 60);
+}
+
+// The name a map is saved under: the document's title + its diagram type,
+// e.g. "Spring Boot Learning Plan - Flowchart".
+function buildMapTitle(md, diagramType) {
+  return `${deriveTitle(md)} - ${typeLabel(diagramType)}`;
+}
+
 export default function App() {
   const [markdown, setMarkdown] = useState(loadInitial);
   const [activePane, setActivePane] = useState('edit'); // mobile toggle
   const [howOpen, setHowOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [mapsOpen, setMapsOpen] = useState(false);
   const [diagramType, setDiagramType] = useState('mindmap');
   const exIdx = useRef(0);
   const fileRef = useRef(null);
@@ -38,6 +57,10 @@ export default function App() {
 
   const { toast, flash } = useToast();
 
+  // Passwordless auth session + the signed-in user's cloud maps.
+  const { user, isAuthed, requestOtp, verifyOtp, logout } = useAuth();
+  const cloud = useMindmaps({ flash });
+
   // Re-render the active diagram so its d3 colours follow a theme change.
   const rerenderActive = useCallback(() => setType(diagramType), [setType, diagramType]);
   const { accent, mode, changeAccent, toggleMode } = useTheme(rerenderActive);
@@ -46,6 +69,7 @@ export default function App() {
     onImported: (md) => {
       setMarkdown(md);
       setActivePane('edit');
+      cloud.startNew(); // an imported document is a new map
     },
     flash,
   });
@@ -62,18 +86,48 @@ export default function App() {
   const handleExample = () => {
     exIdx.current = (exIdx.current + 1) % exampleOrder.length;
     setMarkdown(examples[exampleOrder[exIdx.current]]);
+    cloud.startNew(); // fresh content → next Save makes a new cloud map
   };
 
   const handleClear = () => {
     exIdx.current = 0;
     setMarkdown(examples.readme);
     setActivePane('edit');
+    cloud.startNew();
     flash('Cleared — reset to example');
   };
 
-  const handleTypeChange = (type) => {
+  const handleTypeChange = (type, { fromOpen = false } = {}) => {
     setDiagramType(type);
     setType(type);
+    // A different diagram type is a distinct saved map — so switching type (when
+    // the user does it) starts a new cloud document. Opening a saved map passes
+    // fromOpen so it keeps pointing at that map.
+    if (!fromOpen) cloud.startNew();
+  };
+
+  // ── Cloud save / account ───────────────────────────────
+  const handleSave = () => {
+    if (!isAuthed) {
+      setAuthOpen(true);
+      return;
+    }
+    cloud.save({ title: buildMapTitle(markdown, diagramType), markdown, kind: diagramType });
+  };
+
+  const handleOpenMap = (map) => {
+    setMarkdown(map.markdown ?? '');
+    if (map.kind) handleTypeChange(map.kind, { fromOpen: true });
+    cloud.open(map.id);
+    setMapsOpen(false);
+    setActivePane('edit');
+    flash(`Opened “${map.title || 'Untitled'}”`);
+  };
+
+  const handleSignOut = () => {
+    logout();
+    cloud.reset();
+    flash('Signed out');
   };
 
   const handleImportClick = () => fileRef.current?.click();
@@ -111,7 +165,7 @@ export default function App() {
 
   return (
     <div
-      className="flex h-dvh w-full flex-col pb-[env(safe-area-inset-bottom,0px)] pl-[max(16px,env(safe-area-inset-left,0px))] pr-[max(16px,env(safe-area-inset-right,0px))] pt-[env(safe-area-inset-top,0px)] min-[1200px]:pl-[max(28px,env(safe-area-inset-left,0px))] min-[1200px]:pr-[max(28px,env(safe-area-inset-right,0px))] min-[1700px]:mx-auto min-[1700px]:max-w-[1800px]"
+      className="flex h-dvh w-full flex-col pb-[env(safe-area-inset-bottom,0px)] pl-[max(16px,env(safe-area-inset-left,0px))] pr-[max(16px,env(safe-area-inset-right,0px))] pt-[env(safe-area-inset-top,0px)] min-[1200px]:pl-[max(20px,env(safe-area-inset-left,0px))] min-[1200px]:pr-[max(20px,env(safe-area-inset-right,0px))]"
     >
       <Toolbar
         onExample={handleExample}
@@ -123,6 +177,12 @@ export default function App() {
         onAccentChange={changeAccent}
         mode={mode}
         onToggleMode={toggleMode}
+        isAuthed={isAuthed}
+        email={user?.email}
+        onSignIn={() => setAuthOpen(true)}
+        onSignOut={handleSignOut}
+        onSave={handleSave}
+        onOpenMaps={() => setMapsOpen(true)}
       />
 
       <div
@@ -201,6 +261,23 @@ export default function App() {
       </div>
       <Preloader show={importing} />
       <HowDialog open={howOpen} onClose={() => setHowOpen(false)} />
+      <AuthDialog
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        requestOtp={requestOtp}
+        verifyOtp={verifyOtp}
+        flash={flash}
+      />
+      <MapsDialog
+        open={mapsOpen}
+        onClose={() => setMapsOpen(false)}
+        maps={cloud.maps}
+        loading={cloud.loading}
+        currentId={cloud.currentId}
+        onRefresh={cloud.refresh}
+        onOpenMap={handleOpenMap}
+        onDelete={cloud.remove}
+      />
     </div>
   );
 }

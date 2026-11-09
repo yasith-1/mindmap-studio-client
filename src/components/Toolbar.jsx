@@ -6,7 +6,11 @@ import {
   DownloadIcon,
   SunIcon,
   MoonIcon,
+  SaveIcon,
+  CloudIcon,
+  UserIcon,
 } from './Icons.jsx';
+import AccountMenu from './AccountMenu.jsx';
 
 // Preset accent colours; the custom picker covers everything else.
 const PRESETS = ['#2dd4bf', '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#22c55e'];
@@ -29,6 +33,12 @@ export default function Toolbar({
   onAccentChange,
   mode,
   onToggleMode,
+  isAuthed,
+  email,
+  onSignIn,
+  onSignOut,
+  onSave,
+  onOpenMaps,
 }) {
   const current = (accent || '').toLowerCase();
   return (
@@ -152,6 +162,42 @@ export default function Toolbar({
           <DownloadIcon width="15" height="15" />{' '}
           <span className="max-[600px]:sr-only">Download</span>
         </button>
+      </div>
+
+      {/* Account + cloud save. Guests see a single "Sign in"; signed-in users
+          get Save, My maps and an avatar menu. */}
+      <div className="flex items-center gap-[7px] max-[1100px]:w-full max-[1100px]:justify-end max-[600px]:gap-1.5">
+        {isAuthed ? (
+          <>
+            <button
+              className={`btn ${TOOL}`}
+              onClick={onSave}
+              title="Save the current map to the cloud"
+              aria-label="Save to cloud"
+            >
+              <SaveIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Save</span>
+            </button>
+            <button
+              className={`btn ${TOOL}`}
+              onClick={onOpenMaps}
+              title="Open your saved maps"
+              aria-label="My saved maps"
+            >
+              <CloudIcon width="15" height="15" />{' '}
+              <span className="max-[600px]:sr-only">My maps</span>
+            </button>
+            <AccountMenu email={email} onSignOut={onSignOut} />
+          </>
+        ) : (
+          <button
+            className="btn"
+            onClick={onSignIn}
+            title="Sign in to save maps to the cloud"
+            aria-label="Sign in"
+          >
+            <UserIcon width="15" height="15" /> <span className="max-[480px]:sr-only">Sign in</span>
+          </button>
+        )}
       </div>
     </header>
   );

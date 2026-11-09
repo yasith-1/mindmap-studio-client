@@ -1,11 +1,14 @@
 import { PlusIcon, MinusIcon, FitIcon } from './Icons.jsx';
 
-const TYPES = [
+export const TYPES = [
   { id: 'mindmap', label: 'Mind map' },
   { id: 'tree', label: 'Tree' },
   { id: 'flow', label: 'Flowchart' },
   { id: 'concept', label: 'Concept' },
 ];
+
+/** Human label for a diagram type id (e.g. 'flow' → 'Flowchart'). */
+export const typeLabel = (id) => TYPES.find((t) => t.id === id)?.label ?? id;
 
 export default function MindMap({
   mindmapRef,

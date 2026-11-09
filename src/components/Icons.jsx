@@ -76,3 +76,49 @@ export const FitIcon = (p) => (
     <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />
   </svg>
 );
+
+export const UserIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+export const LogOutIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <path d="M16 17l5-5-5-5M21 12H9" />
+  </svg>
+);
+
+export const CloudIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+  </svg>
+);
+
+export const SaveIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+    <path d="M17 21v-8H7v8M7 3v5h8" />
+  </svg>
+);
+
+export const MapsIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3z" />
+    <path d="M9 3v15M15 6v15" />
+  </svg>
+);
+
+export const TrashIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+);
+
+export const SpinnerIcon = ({ className = '', ...p }) => (
+  <svg {...base} {...p} className={`animate-spin ${className}`}>
+    <path d="M21 12a9 9 0 1 1-6.22-8.56" />
+  </svg>
+);
