@@ -10,6 +10,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  *   2. enter code   → verifyOtp signs the user in
  * No passwords, no registration — the account is created on first verify.
  */
+// mm:ss formatter for the countdown.
+const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
 export default function AuthDialog({ open, onClose, requestOtp, verifyOtp, flash }) {
   const ref = useRef(null);
   const [step, setStep] = useState('email'); // 'email' | 'code'
@@ -17,6 +20,8 @@ export default function AuthDialog({ open, onClose, requestOtp, verifyOtp, flash
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Seconds until the current code expires; "Resend" unlocks when it hits 0.
+  const [secondsLeft, setSecondsLeft] = useState(0);
 
   useEffect(() => {
     const el = ref.current;
@@ -32,8 +37,16 @@ export default function AuthDialog({ open, onClose, requestOtp, verifyOtp, flash
       setCode('');
       setBusy(false);
       setError('');
+      setSecondsLeft(0);
     }
   }, [open]);
+
+  // Tick the countdown down to 0 while on the code step.
+  useEffect(() => {
+    if (step !== 'code') return undefined;
+    const t = setInterval(() => setSecondsLeft((s) => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [step]);
 
   const sendCode = async (e) => {
     e?.preventDefault();
@@ -44,7 +57,10 @@ export default function AuthDialog({ open, onClose, requestOtp, verifyOtp, flash
     setBusy(true);
     setError('');
     try {
-      await requestOtp(email.trim().toLowerCase());
+      const res = await requestOtp(email.trim().toLowerCase());
+      const mins = res?.ttlMinutes ?? 5;
+      setSecondsLeft(mins * 60); // start / restart the countdown
+      setCode('');
       setStep('code');
       flash('Code sent — check your email');
     } catch (err) {
@@ -88,7 +104,7 @@ export default function AuthDialog({ open, onClose, requestOtp, verifyOtp, flash
         <p className="mb-4 mt-0 text-[0.86rem] leading-[1.5] text-muted">
           {step === 'email'
             ? 'No password. We email you a 6-digit code — that’s the whole sign-in.'
-            : `We sent a code to ${email}. It expires in a few minutes.`}
+            : `We sent a code to ${email}.`}
         </p>
 
         {step === 'email' ? (
@@ -120,6 +136,19 @@ export default function AuthDialog({ open, onClose, requestOtp, verifyOtp, flash
               autoFocus
               onComplete={(full) => verify(null, full)}
             />
+
+            {/* Live expiry countdown */}
+            <p className="m-0 text-center text-[0.8rem] text-muted">
+              {secondsLeft > 0 ? (
+                <>
+                  Code expires in{' '}
+                  <span className="font-semibold tabular-nums text-fg">{fmt(secondsLeft)}</span>
+                </>
+              ) : (
+                <span className="text-[#f43f5e]">Code expired — request a new one.</span>
+              )}
+            </p>
+
             {error && <p className="m-0 text-[0.8rem] text-[#f43f5e]">{error}</p>}
             <button
               type="submit"
@@ -139,10 +168,12 @@ export default function AuthDialog({ open, onClose, requestOtp, verifyOtp, flash
               </button>
               <button
                 type="button"
-                className="cursor-pointer border-0 bg-transparent p-0 text-muted hover:text-accent"
+                disabled={secondsLeft > 0 || busy}
+                className="cursor-pointer border-0 bg-transparent p-0 text-accent hover:underline disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
                 onClick={sendCode}
+                title={secondsLeft > 0 ? `Available when the code expires` : 'Send a new code'}
               >
-                Resend code
+                {secondsLeft > 0 ? `Resend in ${fmt(secondsLeft)}` : 'Resend code'}
               </button>
             </div>
           </form>
