@@ -5,6 +5,7 @@ export const TYPES = [
   { id: 'tree', label: 'Tree' },
   { id: 'flow', label: 'Flowchart' },
   { id: 'concept', label: 'Concept' },
+  { id: 'mermaid', label: 'Mermaid' },
 ];
 
 /** Human label for a diagram type id (e.g. 'flow' → 'Flowchart'). */
@@ -13,6 +14,7 @@ export const typeLabel = (id) => TYPES.find((t) => t.id === id)?.label ?? id;
 export default function MindMap({
   mindmapRef,
   diagramRef,
+  mermaidRef,
   nodeCount,
   diagramType,
   onTypeChange,
@@ -20,7 +22,7 @@ export default function MindMap({
   onZoomOut,
   onFit,
 }) {
-  const mapActive = diagramType === 'mindmap';
+  const view = diagramType === 'mindmap' ? 'map' : diagramType === 'mermaid' ? 'mermaid' : 'd3';
   return (
     <section
       id="pane-map"
@@ -55,8 +57,9 @@ export default function MindMap({
       <div className="canvas-wrap relative min-h-0 flex-1">
         {/* markmap and the d3 diagrams live on separate stacked canvases so
             markmap is never torn down (which broke its auto-fit). */}
-        <svg ref={mindmapRef} id="mindmap" className={mapActive ? '' : 'inactive'} />
-        <svg ref={diagramRef} id="diagram" className={mapActive ? 'inactive' : ''} />
+        <svg ref={mindmapRef} id="mindmap" className={view === 'map' ? '' : 'inactive'} />
+        <svg ref={diagramRef} id="diagram" className={view === 'd3' ? '' : 'inactive'} />
+        <div ref={mermaidRef} id="mermaid-canvas" className={view === 'mermaid' ? '' : 'inactive'} />
         <div className="absolute bottom-3 right-3 flex flex-col gap-1.5">
           <button
             className="flex size-[34px] cursor-pointer items-center justify-center rounded-[9px] border border-line bg-surface p-0 text-fg shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:border-accent pointer-coarse:size-11"

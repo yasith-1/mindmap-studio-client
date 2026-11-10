@@ -12,7 +12,13 @@ import { useToast } from './hooks/useToast.js';
 import { useImport } from './hooks/useImport.js';
 import { useAuth } from './hooks/useAuth.js';
 import { useMindmaps } from './hooks/useMindmaps.js';
-import { copyMindmapSvg, copyMindmapPng, downloadMindmapSvg, downloadBlob } from './lib/exportSvg.js';
+import {
+  copyMindmapSvg,
+  copyMindmapPng,
+  downloadMindmapSvg,
+  downloadBlob,
+  svgElementToRasterBlob,
+} from './lib/exportSvg.js';
 import { renderMapToPngBlob } from './lib/exportMap.js';
 import { readStored, writeStored } from './lib/storage.js';
 import { examples, exampleOrder } from './data/examples.js';
@@ -53,7 +59,7 @@ export default function App() {
   const exIdx = useRef(0);
   const fileRef = useRef(null);
 
-  const { mindmapRef, diagramRef, update, setType, nodeCount, zoomIn, zoomOut, fit } =
+  const { mindmapRef, diagramRef, mermaidRef, update, setType, nodeCount, zoomIn, zoomOut, fit } =
     useDiagram();
 
   const { toast, flash } = useToast();
@@ -134,9 +140,13 @@ export default function App() {
   // Render a saved map off-screen and download it as a high-res PNG.
   const handleDownloadMap = async (map) => {
     const name = (map.title || 'mindmap').replace(/[^\w\- ]+/g, '').trim() || 'mindmap';
-    const blob = await renderMapToPngBlob(map.markdown ?? '', map.kind ?? 'mindmap', 3);
-    downloadBlob(blob, `${name}.png`);
-    flash(`Downloaded ${name}.png`);
+    try {
+      const blob = await renderMapToPngBlob(map.markdown ?? '', map.kind ?? 'mindmap', 3);
+      downloadBlob(blob, `${name}.png`);
+      flash(`Downloaded ${name}.png`);
+    } catch (err) {
+      flash(err.message || 'Could not export that map');
+    }
   };
 
   const handleImportClick = () => fileRef.current?.click();
@@ -146,8 +156,11 @@ export default function App() {
     importFile(file);
   };
 
-  const activeSvg = () =>
-    diagramType === 'mindmap' ? mindmapRef.current : diagramRef.current;
+  const activeSvg = () => {
+    if (diagramType === 'mindmap') return mindmapRef.current;
+    if (diagramType === 'mermaid') return mermaidRef.current?.querySelector('svg');
+    return diagramRef.current;
+  };
 
   const handleCopy = async () => {
     try {
@@ -167,9 +180,27 @@ export default function App() {
     }
   };
 
-  const handleDownload = () => {
-    downloadMindmapSvg(activeSvg(), `${diagramType}.svg`);
-    flash(`Downloading ${diagramType}.svg`);
+  // Download the active diagram in the chosen format (svg / png / jpeg).
+  const handleDownload = async (format = 'svg') => {
+    const svgEl = activeSvg();
+    if (!svgEl) {
+      flash('Nothing to download yet');
+      return;
+    }
+    try {
+      if (format === 'svg') {
+        downloadMindmapSvg(svgEl, `${diagramType}.svg`);
+        flash(`Downloading ${diagramType}.svg`);
+        return;
+      }
+      const type = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+      const ext = format === 'jpeg' ? 'jpg' : 'png';
+      const blob = await svgElementToRasterBlob(svgEl, { type, scale: 3 });
+      downloadBlob(blob, `${diagramType}.${ext}`);
+      flash(`Downloading ${diagramType}.${ext}`);
+    } catch (err) {
+      flash(err.message || 'Download failed');
+    }
   };
 
   return (
@@ -231,6 +262,7 @@ export default function App() {
         <MindMap
           mindmapRef={mindmapRef}
           diagramRef={diagramRef}
+          mermaidRef={mermaidRef}
           nodeCount={nodeCount}
           diagramType={diagramType}
           onTypeChange={handleTypeChange}

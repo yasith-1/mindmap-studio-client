@@ -3,7 +3,6 @@ import {
   ImportIcon,
   CopyIcon,
   ImageIcon,
-  DownloadIcon,
   SunIcon,
   MoonIcon,
   SaveIcon,
@@ -11,6 +10,7 @@ import {
   UserIcon,
 } from './Icons.jsx';
 import AccountMenu from './AccountMenu.jsx';
+import DownloadButton from './DownloadButton.jsx';
 
 // Preset accent colours; the custom picker covers everything else.
 const PRESETS = ['#2dd4bf', '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#22c55e'];
@@ -153,15 +153,7 @@ export default function Toolbar({
         >
           <ImageIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Copy PNG</span>
         </button>
-        <button
-          className={`btn btn-primary ${TOOL}`}
-          onClick={onDownload}
-          title="Download the mind map as an SVG file"
-          aria-label="Download diagram as SVG"
-        >
-          <DownloadIcon width="15" height="15" />{' '}
-          <span className="max-[600px]:sr-only">Download</span>
-        </button>
+        <DownloadButton onDownload={onDownload} className={TOOL} />
       </div>
 
       {/* Account + cloud save. Guests see a single "Sign in"; signed-in users

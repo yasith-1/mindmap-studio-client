@@ -8,6 +8,7 @@ import { parseTree } from './diagrams/shared.js';
 import { renderTree } from './diagrams/tree.js';
 import { renderFlow } from './diagrams/flow.js';
 import { renderConcept } from './diagrams/concept.js';
+import { mermaidToSvgString } from './diagrams/mermaid.js';
 import { svgElementToPngBlob } from './exportSvg.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -51,11 +52,29 @@ async function waitForStableContent(svg, { step = 40, maxTries = 60 } = {}) {
 
 /**
  * @param {string} markdown
- * @param {string} kind  'mindmap' | 'tree' | 'flow' | 'concept'
+ * @param {string} kind  'mindmap' | 'tree' | 'flow' | 'concept' | 'mermaid'
  * @param {number} scale pixel multiplier (higher = sharper / larger)
  * @returns {Promise<Blob>} a PNG blob
  */
 export async function renderMapToPngBlob(markdown, kind = 'mindmap', scale = 3) {
+  // Mermaid renders its own standalone SVG. Put it in an off-screen DOM node and
+  // reuse svgElementToPngBlob, whose raster-safe path inlines Mermaid's
+  // <foreignObject> labels as plain SVG text (otherwise the canvas is tainted).
+  if (kind === 'mermaid') {
+    const svgString = await mermaidToSvgString(markdown);
+    if (!svgString) throw new Error('No mermaid diagram in this map to export.');
+    const host = document.createElement('div');
+    host.style.cssText =
+      'position:fixed;left:-10000px;top:0;width:2000px;opacity:0;pointer-events:none;z-index:-1;';
+    host.innerHTML = svgString;
+    document.body.appendChild(host);
+    try {
+      return await svgElementToPngBlob(host.querySelector('svg'), scale);
+    } finally {
+      host.remove();
+    }
+  }
+
   // Off-screen but still laid out, so getBBox() works (display:none would not).
   const host = document.createElement('div');
   host.style.cssText =

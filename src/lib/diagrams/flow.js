@@ -12,12 +12,31 @@ const MAX_LABEL = 24;
 
 const NODE_W = 188;
 const NODE_H = 40;
-const ROW_GAP = 16; // vertical space between siblings
+const ROW_GAP = 22; // vertical space between siblings (room for diamonds)
 const COL_GAP = 70; // horizontal space between stages
 
+const IO_RE = /^(input|output|read|print|display|show|get|enter|scan|write|return|fetch|load|save)\b/i;
+
 /**
- * Left-to-right flow chart: sharp process boxes joined by orthogonal
- * connectors with arrowheads, showing direction of flow parent -> child.
+ * Pick the standard flowchart symbol for a node from its position and text:
+ *   terminal (oval)   — the root (Start) and leaves (End)
+ *   decision (diamond) — text phrased as a question ("...?")
+ *   io (parallelogram) — input/output verbs
+ *   process (rectangle) — everything else
+ */
+function shapeOf(d) {
+  const name = (d.data?.name || '').trim();
+  if (d.depth === 0) return 'terminal'; // Start
+  if (/\?\s*$/.test(name)) return 'decision';
+  if (IO_RE.test(name)) return 'io';
+  if (!d.children) return 'terminal'; // End
+  return 'process';
+}
+
+/**
+ * Left-to-right flow chart using proper flowchart symbols — oval start/end,
+ * diamond decisions, parallelogram input/output and rectangle processes —
+ * joined by orthogonal connectors with arrowheads (flow parent -> child).
  */
 export function renderFlow(svgEl, data) {
   const t = theme();
@@ -30,6 +49,7 @@ export function renderFlow(svgEl, data) {
   root.each((d) => {
     d.px = d.y;
     d.py = d.x;
+    d.shape = shapeOf(d);
   });
 
   // Arrowhead marker — `context-stroke` makes each arrow take its link's colour.
@@ -75,16 +95,50 @@ export function renderFlow(svgEl, data) {
     .join('g')
     .attr('transform', (d) => `translate(${d.px},${d.py})`);
 
-  node
-    .append('rect')
-    .attr('x', -NODE_W / 2)
-    .attr('y', -NODE_H / 2)
-    .attr('width', NODE_W)
-    .attr('height', NODE_H)
-    .attr('rx', 4)
-    .attr('fill', (d) => (d.depth === 0 ? t.accent : t.surface))
-    .attr('stroke', (d) => (d.depth === 0 ? t.accent : d.color))
-    .attr('stroke-width', (d) => (d.depth === 0 ? 1.5 : 2));
+  // Draw the correct flowchart symbol for each node.
+  const SKEW = 16; // parallelogram slant
+  const DIA_HY = NODE_H * 0.62; // diamond half-height
+  node.each(function (d) {
+    const el = d3.select(this);
+    const w = NODE_W;
+    const h = NODE_H;
+    let shape;
+    if (d.shape === 'decision') {
+      shape = el
+        .append('polygon')
+        .attr('points', `0,${-DIA_HY} ${w / 2},0 0,${DIA_HY} ${-w / 2},0`);
+    } else if (d.shape === 'io') {
+      shape = el
+        .append('polygon')
+        .attr(
+          'points',
+          `${-w / 2 + SKEW},${-h / 2} ${w / 2},${-h / 2} ${w / 2 - SKEW},${h / 2} ${-w / 2},${h / 2}`
+        );
+    } else if (d.shape === 'terminal') {
+      // Oval / stadium (fully rounded ends).
+      shape = el
+        .append('rect')
+        .attr('x', -w / 2)
+        .attr('y', -h / 2)
+        .attr('width', w)
+        .attr('height', h)
+        .attr('rx', h / 2)
+        .attr('ry', h / 2);
+    } else {
+      // Process rectangle.
+      shape = el
+        .append('rect')
+        .attr('x', -w / 2)
+        .attr('y', -h / 2)
+        .attr('width', w)
+        .attr('height', h)
+        .attr('rx', 3);
+    }
+    shape
+      .attr('fill', d.depth === 0 ? t.accent : t.surface)
+      .attr('stroke', d.depth === 0 ? t.accent : d.color)
+      .attr('stroke-width', d.depth === 0 ? 1.5 : 2);
+  });
 
   node
     .append('text')

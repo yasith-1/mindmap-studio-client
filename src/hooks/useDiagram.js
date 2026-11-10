@@ -5,6 +5,7 @@ import { parseTree } from '../lib/diagrams/shared.js';
 import { renderTree } from '../lib/diagrams/tree.js';
 import { renderFlow } from '../lib/diagrams/flow.js';
 import { renderConcept } from '../lib/diagrams/concept.js';
+import { renderMermaid } from '../lib/diagrams/mermaid.js';
 
 const transformer = new Transformer();
 
@@ -42,8 +43,10 @@ const D3_RENDERERS = {
 export function useDiagram() {
   const mindmapRef = useRef(null); // <svg> for markmap
   const diagramRef = useRef(null); // <svg> for the d3 diagrams
+  const mermaidRef = useRef(null); // <div> for rendered Mermaid diagrams
   const mmRef = useRef(null); // markmap instance (persistent)
-  const ctrlRef = useRef(null); // active d3 controller
+  const ctrlRef = useRef(null); // active d3 / mermaid controller
+  const mermaidToken = useRef(0); // guards async Mermaid renders against races
   const typeRef = useRef('mindmap');
   const mdRef = useRef('');
   const [nodeCount, setNodeCount] = useState(0);
@@ -103,14 +106,34 @@ export function useDiagram() {
     setNodeCount(ctrlRef.current.count);
   }, []);
 
+  // Mermaid is async (and lazily loaded), so guard stale renders with a token.
+  const renderMermaidView = useCallback(() => {
+    const el = mermaidRef.current;
+    if (!el) return;
+    ctrlRef.current?.destroy?.();
+    ctrlRef.current = null;
+    const token = ++mermaidToken.current;
+    renderMermaid(el, mdRef.current)
+      .then((ctrl) => {
+        if (token !== mermaidToken.current) {
+          ctrl.destroy?.();
+          return;
+        }
+        ctrlRef.current = ctrl;
+        setNodeCount(ctrl.count);
+      })
+      .catch(() => {});
+  }, []);
+
   const render = useCallback(
     (markdown, type) => {
       if (typeof markdown === 'string') mdRef.current = markdown;
       if (type) typeRef.current = type;
       if (typeRef.current === 'mindmap') renderMindmap();
+      else if (typeRef.current === 'mermaid') renderMermaidView();
       else renderD3();
     },
-    [renderMindmap, renderD3],
+    [renderMindmap, renderD3, renderMermaidView],
   );
 
   const update = useCallback((markdown) => render(markdown), [render]);
@@ -149,5 +172,5 @@ export function useDiagram() {
     [],
   );
 
-  return { mindmapRef, diagramRef, update, setType, nodeCount, zoomIn, zoomOut, fit };
+  return { mindmapRef, diagramRef, mermaidRef, update, setType, nodeCount, zoomIn, zoomOut, fit };
 }

@@ -96,8 +96,10 @@ export async function copyMindmapSvg(svgEl) {
   return svg;
 }
 
-// Rasterise the serialized SVG to a PNG blob at `scale`× for a crisp image.
-function svgToPngBlob(svg, width, height, scale = 2) {
+// Rasterise the serialized SVG to a raster blob at `scale`× for a crisp image.
+// `type` is a canvas MIME ('image/png' | 'image/jpeg'); `background` paints an
+// opaque fill first (required for JPEG, which has no transparency).
+function svgToRasterBlob(svg, width, height, { scale = 2, type = 'image/png', quality = 0.92, background } = {}) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
     const img = new Image();
@@ -106,9 +108,13 @@ function svgToPngBlob(svg, width, height, scale = 2) {
       canvas.width = Math.max(1, Math.round(width * scale));
       canvas.height = Math.max(1, Math.round(height * scale));
       const ctx = canvas.getContext('2d');
+      if (background) {
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
-      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png');
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), type, quality);
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -118,12 +124,19 @@ function svgToPngBlob(svg, width, height, scale = 2) {
   });
 }
 
-// Rasterise a rendered diagram <svg> to a PNG blob. `scale` multiplies the
+// Rasterise a rendered diagram <svg> to a PNG/JPEG blob. `scale` multiplies the
 // pixel dimensions for a crisp, high-resolution image (3× by default).
-export async function svgElementToPngBlob(svgEl, scale = 3) {
+export async function svgElementToRasterBlob(svgEl, { type = 'image/png', scale = 3, quality = 0.92 } = {}) {
   if (!svgEl) throw new Error('No diagram');
   const { svg, width, height } = buildSvg(svgEl, { rasterSafe: true });
-  return svgToPngBlob(svg, width, height, scale);
+  const surface = getComputedStyle(document.body).getPropertyValue('--surface').trim() || '#ffffff';
+  // JPEG has no alpha — paint the surface colour behind it.
+  const background = type === 'image/jpeg' ? surface : undefined;
+  return svgToRasterBlob(svg, width, height, { scale, type, quality, background });
+}
+
+export async function svgElementToPngBlob(svgEl, scale = 3) {
+  return svgElementToRasterBlob(svgEl, { type: 'image/png', scale });
 }
 
 export async function copyMindmapPng(svgEl) {

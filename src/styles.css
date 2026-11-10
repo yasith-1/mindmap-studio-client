@@ -152,6 +152,57 @@
 #diagram.inactive {
   display: none;
 }
+
+/* Mermaid diagrams render their own SVG into this div; we pan/zoom the inner
+   wrapper via a CSS transform (see lib/diagrams/mermaid.js). */
+#mermaid-canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+}
+#mermaid-canvas:active {
+  cursor: grabbing;
+}
+#mermaid-canvas.inactive {
+  display: none;
+}
+.mermaid-inner {
+  display: inline-block;
+  padding: 16px;
+  will-change: transform;
+}
+.mermaid-diagram + .mermaid-diagram {
+  margin-top: 24px;
+}
+.mermaid-diagram svg {
+  max-width: none;
+  height: auto;
+  display: block;
+}
+.mermaid-empty {
+  padding: 40px 24px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: center;
+}
+.mermaid-empty code {
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  padding: 1px 5px;
+  font-family: var(--mono);
+  font-size: 0.82em;
+}
+.mermaid-error {
+  margin: 0;
+  padding: 16px;
+  color: #f43f5e;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+}
 /* Full-label tooltip for truncated diagram nodes (created in JS). */
 .diagram-tip {
   position: fixed;
