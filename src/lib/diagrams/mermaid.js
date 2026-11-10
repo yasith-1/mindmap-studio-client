@@ -98,13 +98,36 @@ export async function renderMermaid(container, markdown) {
     }
   }
 
-  // Pan (drag) + zoom (wheel) by transforming the inner wrapper.
+  // Give each SVG an explicit intrinsic size and record it. Zooming then resizes
+  // the SVGs (vector-crisp) rather than CSS-scaling a bitmap (which blurs the
+  // strokes into a "glow"); only panning uses a CSS translate.
+  const diagrams = [...inner.querySelectorAll('svg')].map((el) => {
+    const vb = el.viewBox && el.viewBox.baseVal;
+    const w = vb && vb.width ? vb.width : el.getBBox().width || 1;
+    const h = vb && vb.height ? vb.height : el.getBBox().height || 1;
+    el.style.maxWidth = 'none';
+    el.setAttribute('width', w);
+    el.setAttribute('height', h);
+    return { el, w, h };
+  });
+  const GAP = 24;
+  const natW = Math.max(...diagrams.map((d) => d.w), 1);
+  const natH = diagrams.reduce((sum, d) => sum + d.h, 0) + Math.max(0, diagrams.length - 1) * GAP;
+
+  const applyScale = (k) => {
+    for (const d of diagrams) {
+      d.el.style.width = `${d.w * k}px`;
+      d.el.style.height = `${d.h * k}px`;
+    }
+  };
+
   const zoom = d3
     .zoom()
     .scaleExtent([0.2, 4])
     .on('zoom', (ev) => {
+      applyScale(ev.transform.k); // crisp vector scaling
       inner.style.transformOrigin = '0 0';
-      inner.style.transform = `translate(${ev.transform.x}px,${ev.transform.y}px) scale(${ev.transform.k})`;
+      inner.style.transform = `translate(${ev.transform.x}px,${ev.transform.y}px)`; // pan only
     });
   const sel = d3.select(container);
   sel.call(zoom).on('dblclick.zoom', null);
@@ -114,14 +137,12 @@ export async function renderMermaid(container, markdown) {
   const fitTransform = () => {
     const cw = container.clientWidth || 1;
     const ch = container.clientHeight || 1;
-    const pad = 24;
-    const cwid = inner.scrollWidth || 1; // layout size (ignores the transform)
-    const chei = inner.scrollHeight || 1;
-    const kWidth = (cw - pad) / cwid;
-    const tall = chei * kWidth > ch; // still taller than the viewport once width-fit
-    const k = Math.min(tall ? kWidth : Math.min(kWidth, (ch - pad) / chei), 1.5);
-    const tx = (cw - cwid * k) / 2;
-    const ty = tall ? pad / 2 : (ch - chei * k) / 2;
+    const pad = 32;
+    const kWidth = (cw - pad) / natW;
+    const tall = natH * kWidth > ch; // still taller than the viewport once width-fit
+    const k = Math.min(tall ? kWidth : Math.min(kWidth, (ch - pad) / natH), 1.5);
+    const tx = (cw - natW * k) / 2;
+    const ty = tall ? pad / 2 : (ch - natH * k) / 2;
     return d3.zoomIdentity.translate(tx, ty).scale(k);
   };
 
