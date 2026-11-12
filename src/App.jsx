@@ -125,7 +125,7 @@ export default function App() {
   const handleOpenMap = (map) => {
     setMarkdown(map.markdown ?? '');
     if (map.kind) handleTypeChange(map.kind, { fromOpen: true });
-    cloud.open(map.id);
+    cloud.open(map);
     setMapsOpen(false);
     setActivePane('edit');
     flash(`Opened “${map.title || 'Untitled'}”`);
