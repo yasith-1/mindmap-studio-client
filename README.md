@@ -1,4 +1,4 @@
-# MindMap Studio — Client (Frontend)
+# MarkMind — Client (Frontend)
 
 **Markdown එකක් type කරනකොට, ඒක live mind map / diagram එකක් බවට පත් කරන web app එක.**
 වමෙන් Markdown ලියන්න, දකුණෙන් diagram එක real-time එකේම නැවත අඳිනවා. Server

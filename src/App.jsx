@@ -23,7 +23,7 @@ import { renderMapToPngBlob } from './lib/exportMap.js';
 import { readStored, writeStored } from './lib/storage.js';
 import { examples, exampleOrder } from './data/examples.js';
 
-const DRAFT_KEY = 'mms-draft';
+const DRAFT_KEY = 'mkm-draft';
 
 // Accepted import types — kept in one place for the file input, the button
 // hint, and the footer so the user always knows what they can import.

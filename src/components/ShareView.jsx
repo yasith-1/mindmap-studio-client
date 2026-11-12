@@ -95,7 +95,7 @@ export default function ShareView({ token }) {
           <path d="M11 16H16M16 16c0-4 2-7 5-8M16 16h5M16 16c0 4 2 7 5 8" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
         </svg>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[0.95rem] font-bold tracking-[-0.01em]">{title || 'MindMap Studio'}</div>
+          <div className="truncate text-[0.95rem] font-bold tracking-[-0.01em]">{title || 'MarkMind'}</div>
           <div className="text-[0.7rem] text-muted">Shared mind map · read-only</div>
         </div>
         <button
@@ -109,7 +109,7 @@ export default function ShareView({ token }) {
         <a
           href="/"
           className="btn"
-          title="Open MindMap Studio"
+          title="Open MarkMind"
         >
           Open editor
         </a>

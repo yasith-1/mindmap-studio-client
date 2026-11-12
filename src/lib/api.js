@@ -1,4 +1,4 @@
-// Thin fetch wrapper for the MapStudio backend. Owns the base URL, attaches
+// Thin fetch wrapper for the MarkMind backend. Owns the base URL, attaches
 // the bearer token when signed in, and turns non-2xx JSON responses into
 // thrown Errors carrying the server's message — so callers can just try/catch.
 import { getToken } from './auth.js';

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { readStored, writeStored } from '../lib/storage.js';
 import { applyAccent, applyMode, currentAccent, prefersDark, toHex } from '../lib/theme.js';
 
-const ACCENT_KEY = 'mms-accent';
-const THEME_KEY = 'mms-theme';
+const ACCENT_KEY = 'mkm-accent';
+const THEME_KEY = 'mkm-theme';
 
 /**
  * Owns the app's accent colour and light/dark mode: state, persistence and the

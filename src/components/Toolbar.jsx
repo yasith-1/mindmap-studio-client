@@ -63,7 +63,7 @@ export default function Toolbar({
         </svg>
         <div className="min-w-0">
           <h1 className="m-0 whitespace-nowrap text-[1.02rem] font-bold tracking-[-0.01em]">
-            MindMap Studio
+            MarkMind
           </h1>
           <span className="whitespace-nowrap text-[0.72rem] font-medium text-muted max-[520px]:hidden">
             Markdown in, mind map out — live

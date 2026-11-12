@@ -3,7 +3,7 @@
 // when storage is blocked (the user simply stays in guest mode).
 import { readStored, writeStored } from './storage.js';
 
-const TOKEN_KEY = 'mms-token';
+const TOKEN_KEY = 'mkm-token';
 
 export function getToken() {
   return readStored(TOKEN_KEY, '') || null;
