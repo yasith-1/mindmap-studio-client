@@ -39,12 +39,15 @@ export default function DownloadButton({ onDownload, className = '' }) {
     <div className={`relative inline-flex ${className}`} ref={ref}>
       <button
         type="button"
-        className="btn btn-primary flex-1 justify-center rounded-r-none"
+        className="btn btn-primary flex-1 justify-center rounded-r-none max-[600px]:flex-col max-[600px]:gap-0.5 max-[600px]:py-1.5"
         onClick={() => pick('svg')}
         title="Download the diagram as SVG"
         aria-label="Download diagram as SVG"
       >
-        <DownloadIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Download</span>
+        <DownloadIcon width="15" height="15" />{' '}
+        <span className="max-[600px]:text-[0.62rem] max-[600px]:font-semibold max-[600px]:leading-tight">
+          Download
+        </span>
       </button>
       <button
         type="button"

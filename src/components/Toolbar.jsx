@@ -18,10 +18,18 @@ const PRESETS = ['#2dd4bf', '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b
 const CUSTOM_GRADIENT = 'conic-gradient(red, orange, yellow, lime, aqua, blue, magenta, red)';
 
 // Shared responsive bit for the five action buttons. Once the toolbar wraps the
-// tools onto their own row (≤1100px), they grow to equal widths and fill it;
-// on small phones (≤480px) they also drop their labels to icon-only squares.
-const TOOL =
-  'max-[1100px]:flex-1 max-[1100px]:justify-center max-[600px]:px-2';
+// tools onto their own row (≤1100px), they grow to equal widths and fill it.
+// Kept free of flex-direction so it is safe on both a <button> and the download
+// split-button's wrapper (which must stay a horizontal main+caret pair).
+const TOOL = 'max-[1100px]:flex-1 max-[1100px]:justify-center max-[600px]:px-2';
+
+// Stacks a button's icon over its caption on small phones, so each one stays
+// identifiable instead of collapsing to a label-less square. Apply to actual
+// <button>s (not the download wrapper).
+const STACK = 'max-[600px]:flex-col max-[600px]:gap-0.5 max-[600px]:py-1.5';
+
+// Button caption: full-size inline on desktop, a compact stacked label on phones.
+const LABEL = 'max-[600px]:text-[0.62rem] max-[600px]:font-semibold max-[600px]:leading-tight';
 
 export default function Toolbar({
   onExample,
@@ -122,36 +130,36 @@ export default function Toolbar({
 
       <div className="flex flex-wrap gap-[7px] max-[1100px]:w-full max-[600px]:gap-1.5 max-[480px]:order-2">
         <button
-          className={`btn ${TOOL}`}
+          className={`btn ${TOOL} ${STACK}`}
           onClick={onExample}
           title="Load a sample document"
           aria-label="Load example"
         >
-          <BookIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Example</span>
+          <BookIcon width="15" height="15" /> <span className={LABEL}>Example</span>
         </button>
         <button
-          className={`btn ${TOOL}`}
+          className={`btn ${TOOL} ${STACK}`}
           onClick={onImport}
           title="Import Markdown, text, HTML, Word (.docx) or PDF — non-Markdown is converted"
           aria-label="Import a file"
         >
-          <ImportIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Import</span>
+          <ImportIcon width="15" height="15" /> <span className={LABEL}>Import</span>
         </button>
         <button
-          className={`btn ${TOOL}`}
+          className={`btn ${TOOL} ${STACK}`}
           onClick={onCopy}
           title="Copy the diagram as SVG"
           aria-label="Copy diagram as SVG"
         >
-          <CopyIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Copy SVG</span>
+          <CopyIcon width="15" height="15" /> <span className={LABEL}>Copy SVG</span>
         </button>
         <button
-          className={`btn ${TOOL}`}
+          className={`btn ${TOOL} ${STACK}`}
           onClick={onCopyPng}
           title="Copy the diagram as a PNG image"
           aria-label="Copy diagram as PNG"
         >
-          <ImageIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Copy PNG</span>
+          <ImageIcon width="15" height="15" /> <span className={LABEL}>Copy PNG</span>
         </button>
         <DownloadButton onDownload={onDownload} className={TOOL} />
       </div>
@@ -162,21 +170,20 @@ export default function Toolbar({
         {isAuthed ? (
           <>
             <button
-              className={`btn ${TOOL}`}
+              className={`btn ${TOOL} ${STACK}`}
               onClick={onSave}
               title="Save the current map to the cloud"
               aria-label="Save to cloud"
             >
-              <SaveIcon width="15" height="15" /> <span className="max-[600px]:sr-only">Save</span>
+              <SaveIcon width="15" height="15" /> <span className={LABEL}>Save</span>
             </button>
             <button
-              className={`btn ${TOOL}`}
+              className={`btn ${TOOL} ${STACK}`}
               onClick={onOpenMaps}
               title="Open your saved maps"
               aria-label="My saved maps"
             >
-              <CloudIcon width="15" height="15" />{' '}
-              <span className="max-[600px]:sr-only">My maps</span>
+              <CloudIcon width="15" height="15" /> <span className={LABEL}>My maps</span>
             </button>
             <AccountMenu email={email} onSignOut={onSignOut} />
           </>
