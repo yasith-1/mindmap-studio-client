@@ -6,6 +6,9 @@
 
 > මේක monorepo එකක frontend කොටසයි. Backend එක (passwordless auth + cloud save)
 > `mindmapStudio-server` repo එකේ.
+>
+> <img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/ecb56912-915e-4436-b7b9-a0c7da6a3c59" />
+
 
 **Stack:** React 18 · Vite 5 · Tailwind CSS v4 · markmap · d3 · mermaid
 
