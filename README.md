@@ -1,4 +1,4 @@
-# MarkMind — Client (Frontend)
+# MarkMind
 
 **Turn Markdown into live, interactive mind maps and diagrams — right in your browser.**
 Type Markdown on the left, and watch the diagram redraw in real time on the right.
