@@ -51,7 +51,7 @@ export default function Toolbar({
   const current = (accent || '').toLowerCase();
   return (
     <header className="flex flex-wrap items-center gap-3 border-b border-line py-3">
-      <div className="flex min-w-0 items-center gap-[9px] max-[480px]:flex-1">
+      <div className="flex min-w-0 items-center gap-[9px] max-[1100px]:flex-1">
         <svg
           className="glyph size-[26px] flex-none"
           viewBox="0 0 32 32"
@@ -80,7 +80,7 @@ export default function Toolbar({
       </div>
 
       <div
-        className="mx-auto flex flex-wrap items-center justify-center gap-1.5 rounded-[10px] border border-line bg-surface px-2 py-1 max-[480px]:order-1 max-[480px]:w-full max-[480px]:justify-between"
+        className="mx-auto flex flex-wrap items-center justify-center gap-1.5 rounded-[10px] border border-line bg-surface px-2 py-1 max-[1100px]:order-1 max-[1100px]:w-full max-[480px]:justify-between"
         role="group"
         aria-label="Theme"
       >
@@ -128,7 +128,7 @@ export default function Toolbar({
         </label>
       </div>
 
-      <div className="flex flex-wrap gap-[7px] max-[1100px]:w-full max-[600px]:gap-1.5 max-[480px]:order-2">
+      <div className="flex flex-wrap gap-[7px] max-[1100px]:w-full max-[1100px]:order-2 max-[600px]:gap-1.5">
         <button
           className={`btn ${TOOL} ${STACK}`}
           onClick={onExample}
@@ -166,7 +166,7 @@ export default function Toolbar({
 
       {/* Account + cloud save. Guests see a single "Sign in"; signed-in users
           get Save, My maps and an avatar menu. */}
-      <div className="flex items-center gap-[7px] max-[1100px]:w-full max-[1100px]:justify-end max-[600px]:gap-1.5 max-[480px]:w-auto">
+      <div className="flex items-center gap-[7px] max-[600px]:gap-1.5">
         {isAuthed ? (
           <>
             <button
@@ -194,7 +194,7 @@ export default function Toolbar({
             title="Sign in to save maps to the cloud"
             aria-label="Sign in"
           >
-            <UserIcon width="15" height="15" /> <span className="max-[480px]:sr-only">Sign in</span>
+            <UserIcon width="15" height="15" /> <span>Sign in</span>
           </button>
         )}
       </div>
