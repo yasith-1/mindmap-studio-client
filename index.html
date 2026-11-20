@@ -6,7 +6,27 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="theme-color" content="#0d9488" />
-    <title>MarkMind</title>
+    <title>MarkMind — Turn Markdown into Live Mind Maps</title>
+    <meta
+      name="description"
+      content="MarkMind turns Markdown into interactive mind maps in real time. Type or import .md, .txt, .html, .docx or .pdf, then export your diagram as SVG or PNG."
+    />
+    <link rel="canonical" href="https://mindmap-studio-client.vercel.app/" />
+
+    <!-- Open Graph / social share -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MarkMind — Turn Markdown into Live Mind Maps" />
+    <meta
+      property="og:description"
+      content="Type or import Markdown and watch it become an interactive mind map. Export as SVG or PNG."
+    />
+    <meta property="og:url" content="https://mindmap-studio-client.vercel.app/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MarkMind — Turn Markdown into Live Mind Maps" />
+    <meta
+      name="twitter:description"
+      content="Type or import Markdown and watch it become an interactive mind map. Export as SVG or PNG."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,6 +36,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <h1>MarkMind — Turn Markdown into Live Mind Maps</h1>
+      <p>
+        MarkMind turns Markdown into interactive mind maps in real time. Please enable
+        JavaScript to use the live editor.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
