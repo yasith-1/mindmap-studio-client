@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Toolbar from './components/Toolbar.jsx';
 import Editor from './components/Editor.jsx';
 import MindMap, { typeLabel } from './components/MindMap.jsx';
-import HowDialog from './components/HowDialog.jsx';
+import DocsDialog from './components/DocsDialog.jsx';
 import AuthDialog from './components/AuthDialog.jsx';
 import MapsDialog from './components/MapsDialog.jsx';
 import GithubDialog from './components/GithubDialog.jsx';
@@ -54,7 +54,7 @@ function buildMapTitle(md, diagramType) {
 export default function App() {
   const [markdown, setMarkdown] = useState(loadInitial);
   const [activePane, setActivePane] = useState('edit'); // mobile toggle
-  const [howOpen, setHowOpen] = useState(false);
+  const [docsOpen, setDocsOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [mapsOpen, setMapsOpen] = useState(false);
   const [githubOpen, setGithubOpen] = useState(false);
@@ -222,6 +222,7 @@ export default function App() {
         onExample={handleExample}
         onImport={handleImportClick}
         onGithub={() => setGithubOpen(true)}
+        onDocs={() => setDocsOpen(true)}
         onCopy={handleCopy}
         onCopyPng={handleCopyPng}
         onDownload={handleDownload}
@@ -294,12 +295,6 @@ export default function App() {
           Import accepts <strong className="font-semibold text-accent">{IMPORT_FORMATS}</strong> —
           other text is converted
         </span>
-        <button
-          className="ml-auto cursor-pointer border-0 bg-transparent px-1.5 py-1 text-[0.74rem] text-muted hover:text-accent"
-          onClick={() => setHowOpen(true)}
-        >
-          How this works ↗
-        </button>
       </footer>
 
       <input ref={fileRef} type="file" accept={IMPORT_ACCEPT} hidden onChange={handleFile} />
@@ -313,7 +308,7 @@ export default function App() {
         {toast}
       </div>
       <Preloader show={importing || githubImporting} />
-      <HowDialog open={howOpen} onClose={() => setHowOpen(false)} />
+      <DocsDialog open={docsOpen} onClose={() => setDocsOpen(false)} />
       <AuthDialog
         open={authOpen}
         onClose={() => setAuthOpen(false)}

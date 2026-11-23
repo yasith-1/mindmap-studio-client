@@ -9,6 +9,7 @@ import {
   CloudIcon,
   UserIcon,
   GithubIcon,
+  DocsIcon,
 } from './Icons.jsx';
 import AccountMenu from './AccountMenu.jsx';
 import DownloadButton from './DownloadButton.jsx';
@@ -36,6 +37,7 @@ export default function Toolbar({
   onExample,
   onImport,
   onGithub,
+  onDocs,
   onCopy,
   onCopyPng,
   onDownload,
@@ -131,6 +133,14 @@ export default function Toolbar({
       </div>
 
       <div className="flex flex-wrap gap-[7px] max-[1100px]:w-full max-[1100px]:order-2 max-[600px]:gap-1.5">
+        <button
+          className={`btn ${TOOL} ${STACK}`}
+          onClick={onDocs}
+          title="How to use MarkMind — full guide"
+          aria-label="Open documentation"
+        >
+          <DocsIcon width="15" height="15" /> <span className={LABEL}>Docs</span>
+        </button>
         <button
           className={`btn ${TOOL} ${STACK}`}
           onClick={onExample}
