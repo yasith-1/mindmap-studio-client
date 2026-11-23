@@ -173,6 +173,15 @@ export const CheckIcon = (p) => (
   </svg>
 );
 
+export const QrIcon = (p) => (
+  <svg {...base} {...p}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <path d="M14 14h3v3M21 14v.01M14 21h.01M17 21h.01M21 17v4" />
+  </svg>
+);
+
 export const ChevronDownIcon = (p) => (
   <svg {...base} {...p}>
     <path d="M6 9l6 6 6-6" />

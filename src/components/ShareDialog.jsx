@@ -8,8 +8,10 @@ import {
   CheckIcon,
   TrashIcon,
   SpinnerIcon,
+  QrIcon,
 } from './Icons.jsx';
 import PasswordInput from './PasswordInput.jsx';
+import QrCode from './QrCode.jsx';
 
 const MODES = [
   { id: 'public', label: 'Public', Icon: GlobeIcon, desc: 'Anyone with the link can view it, anytime.' },
@@ -18,6 +20,10 @@ const MODES = [
 ];
 
 const shareUrl = (token) => `${window.location.origin}/s/${token}`;
+
+// A filesystem-friendly name for a downloaded QR, derived from the map title.
+const qrFilename = (title) =>
+  `${(title || '').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'markmind-map'}-qr.png`;
 
 /** Owner-facing dialog to create, copy and revoke share links for a map. */
 export default function ShareDialog({ open, onClose, map, flash }) {
@@ -28,6 +34,7 @@ export default function ShareDialog({ open, onClose, map, flash }) {
   const [error, setError] = useState('');
   const [shares, setShares] = useState([]);
   const [copiedToken, setCopiedToken] = useState('');
+  const [qrToken, setQrToken] = useState(''); // which link's QR panel is open
 
   useEffect(() => {
     const el = ref.current;
@@ -43,6 +50,7 @@ export default function ShareDialog({ open, onClose, map, flash }) {
     setPasscode('');
     setError('');
     setCopiedToken('');
+    setQrToken('');
     api
       .listShares(map.id)
       .then((res) => setShares(res.shares))
@@ -74,6 +82,7 @@ export default function ShareDialog({ open, onClose, map, flash }) {
       });
       setShares((prev) => [share, ...prev]);
       setPasscode('');
+      setQrToken(share.token); // reveal its QR straight away
       await copy(share.token); // hand them a ready-to-paste link
     } catch (err) {
       setError(err.message);
@@ -86,6 +95,7 @@ export default function ShareDialog({ open, onClose, map, flash }) {
     try {
       await api.revokeShare(token);
       setShares((prev) => prev.filter((s) => s.token !== token));
+      setQrToken((t) => (t === token ? '' : t)); // close its QR if it was open
       flash('Link revoked');
     } catch (err) {
       flash(err.message);
@@ -165,33 +175,58 @@ export default function ShareDialog({ open, onClose, map, flash }) {
                 return (
                   <li
                     key={s.token}
-                    className="flex items-center gap-2 rounded-lg border border-line px-3 py-2"
+                    className="flex flex-col rounded-lg border border-line px-3 py-2"
                   >
-                    <Icon width="15" height="15" className="flex-none text-muted" />
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-[0.82rem] font-medium">{meta?.label ?? s.mode}</span>
-                      <span className="truncate text-[0.7rem] text-muted">{shareUrl(s.token)}</span>
-                    </span>
-                    <button
-                      type="button"
-                      className="flex-none cursor-pointer rounded-md border border-transparent p-1.5 text-muted hover:border-line hover:text-accent"
-                      title="Copy link"
-                      onClick={() => copy(s.token)}
-                    >
-                      {copiedToken === s.token ? (
-                        <CheckIcon width="15" height="15" />
-                      ) : (
-                        <LinkIcon width="15" height="15" />
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className="flex-none cursor-pointer rounded-md border border-transparent p-1.5 text-muted hover:border-line hover:text-[#f43f5e]"
-                      title="Revoke link"
-                      onClick={() => revoke(s.token)}
-                    >
-                      <TrashIcon width="15" height="15" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <Icon width="15" height="15" className="flex-none text-muted" />
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-[0.82rem] font-medium">{meta?.label ?? s.mode}</span>
+                        <span className="truncate text-[0.7rem] text-muted">{shareUrl(s.token)}</span>
+                      </span>
+                      <button
+                        type="button"
+                        className={`flex-none cursor-pointer rounded-md border p-1.5 ${
+                          qrToken === s.token
+                            ? 'border-accent text-accent'
+                            : 'border-transparent text-muted hover:border-line hover:text-accent'
+                        }`}
+                        title="Show QR code"
+                        aria-pressed={qrToken === s.token}
+                        onClick={() => setQrToken((t) => (t === s.token ? '' : s.token))}
+                      >
+                        <QrIcon width="15" height="15" />
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-none cursor-pointer rounded-md border border-transparent p-1.5 text-muted hover:border-line hover:text-accent"
+                        title="Copy link"
+                        onClick={() => copy(s.token)}
+                      >
+                        {copiedToken === s.token ? (
+                          <CheckIcon width="15" height="15" />
+                        ) : (
+                          <LinkIcon width="15" height="15" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-none cursor-pointer rounded-md border border-transparent p-1.5 text-muted hover:border-line hover:text-[#f43f5e]"
+                        title="Revoke link"
+                        onClick={() => revoke(s.token)}
+                      >
+                        <TrashIcon width="15" height="15" />
+                      </button>
+                    </div>
+
+                    {qrToken === s.token && (
+                      <div className="mt-3 border-t border-line pt-3">
+                        <QrCode
+                          value={shareUrl(s.token)}
+                          filename={qrFilename(map?.title)}
+                          flash={flash}
+                        />
+                      </div>
+                    )}
                   </li>
                 );
               })}
