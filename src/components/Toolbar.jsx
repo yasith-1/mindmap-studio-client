@@ -8,6 +8,7 @@ import {
   SaveIcon,
   CloudIcon,
   UserIcon,
+  GithubIcon,
 } from './Icons.jsx';
 import AccountMenu from './AccountMenu.jsx';
 import DownloadButton from './DownloadButton.jsx';
@@ -34,6 +35,7 @@ const LABEL = 'max-[600px]:text-[0.62rem] max-[600px]:font-semibold max-[600px]:
 export default function Toolbar({
   onExample,
   onImport,
+  onGithub,
   onCopy,
   onCopyPng,
   onDownload,
@@ -147,6 +149,14 @@ export default function Toolbar({
         </button>
         <button
           className={`btn ${TOOL} ${STACK}`}
+          onClick={onGithub}
+          title="Import a GitHub user's profile README as a mind map"
+          aria-label="Import from GitHub"
+        >
+          <GithubIcon width="15" height="15" /> <span className={LABEL}>GitHub</span>
+        </button>
+        <button
+          className={`btn ${TOOL} ${STACK}`}
           onClick={onCopy}
           title="Copy the diagram as SVG"
           aria-label="Copy diagram as SVG"
@@ -170,20 +180,22 @@ export default function Toolbar({
         {isAuthed ? (
           <>
             <button
-              className={`btn ${TOOL} ${STACK}`}
+              className={`btn ${STACK}`}
               onClick={onSave}
               title="Save the current map to the cloud"
               aria-label="Save to cloud"
             >
-              <SaveIcon width="15" height="15" /> <span className={LABEL}>Save</span>
+              <SaveIcon width="15" height="15" />{' '}
+              <span className={`${LABEL} whitespace-nowrap`}>Save</span>
             </button>
             <button
-              className={`btn ${TOOL} ${STACK}`}
+              className={`btn ${STACK}`}
               onClick={onOpenMaps}
               title="Open your saved maps"
               aria-label="My saved maps"
             >
-              <CloudIcon width="15" height="15" /> <span className={LABEL}>My maps</span>
+              <CloudIcon width="15" height="15" />{' '}
+              <span className={`${LABEL} whitespace-nowrap`}>My maps</span>
             </button>
             <AccountMenu email={email} onSignOut={onSignOut} />
           </>

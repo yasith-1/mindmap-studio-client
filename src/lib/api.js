@@ -52,6 +52,9 @@ export const api = {
   updateMap: (id, data) => request(`/mindmaps/${id}`, { method: 'PUT', body: data, auth: true }),
   deleteMap: (id) => request(`/mindmaps/${id}`, { method: 'DELETE', auth: true }),
 
+  // ── GitHub import (public) ───────────────────────────
+  importGithubReadme: (url) => request('/github/readme', { method: 'POST', body: { url } }),
+
   // ── Share links ──────────────────────────────────────
   // Owner (authenticated)
   createShare: (mapId, body) => request(`/mindmaps/${mapId}/share`, { method: 'POST', body, auth: true }),

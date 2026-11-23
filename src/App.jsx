@@ -5,11 +5,13 @@ import MindMap, { typeLabel } from './components/MindMap.jsx';
 import HowDialog from './components/HowDialog.jsx';
 import AuthDialog from './components/AuthDialog.jsx';
 import MapsDialog from './components/MapsDialog.jsx';
+import GithubDialog from './components/GithubDialog.jsx';
 import Preloader from './components/Preloader.jsx';
 import { useDiagram } from './hooks/useDiagram.js';
 import { useTheme } from './hooks/useTheme.js';
 import { useToast } from './hooks/useToast.js';
 import { useImport } from './hooks/useImport.js';
+import { useGithubImport } from './hooks/useGithubImport.js';
 import { useAuth } from './hooks/useAuth.js';
 import { useMindmaps } from './hooks/useMindmaps.js';
 import {
@@ -55,6 +57,7 @@ export default function App() {
   const [howOpen, setHowOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [mapsOpen, setMapsOpen] = useState(false);
+  const [githubOpen, setGithubOpen] = useState(false);
   const [diagramType, setDiagramType] = useState('mindmap');
   const exIdx = useRef(0);
   const fileRef = useRef(null);
@@ -72,12 +75,20 @@ export default function App() {
   const rerenderActive = useCallback(() => setType(diagramType), [setType, diagramType]);
   const { accent, mode, changeAccent, toggleMode } = useTheme(rerenderActive);
 
-  const { importing, importFile } = useImport({
-    onImported: (md) => {
+  // One place that receives freshly imported Markdown, whatever the source
+  // (file or GitHub) — so both import flows behave identically.
+  const handleImported = useCallback(
+    (md) => {
       setMarkdown(md);
       setActivePane('edit');
       cloud.startNew(); // an imported document is a new map
     },
+    [cloud],
+  );
+
+  const { importing, importFile } = useImport({ onImported: handleImported, flash });
+  const { importing: githubImporting, importFromGithub } = useGithubImport({
+    onImported: handleImported,
     flash,
   });
 
@@ -210,6 +221,7 @@ export default function App() {
       <Toolbar
         onExample={handleExample}
         onImport={handleImportClick}
+        onGithub={() => setGithubOpen(true)}
         onCopy={handleCopy}
         onCopyPng={handleCopyPng}
         onDownload={handleDownload}
@@ -300,7 +312,7 @@ export default function App() {
       >
         {toast}
       </div>
-      <Preloader show={importing} />
+      <Preloader show={importing || githubImporting} />
       <HowDialog open={howOpen} onClose={() => setHowOpen(false)} />
       <AuthDialog
         open={authOpen}
@@ -320,6 +332,12 @@ export default function App() {
         onDownload={handleDownloadMap}
         onDelete={cloud.remove}
         flash={flash}
+      />
+      <GithubDialog
+        open={githubOpen}
+        onClose={() => setGithubOpen(false)}
+        onImport={importFromGithub}
+        importing={githubImporting}
       />
     </div>
   );
